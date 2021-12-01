@@ -21,16 +21,19 @@ import (
 	"github.com/spf13/cobra"
 )
 
+var (
+	appStream string
+)
+
 // importCmd represents the import command
 var importCmd = &cobra.Command{
 	Use:   "import",
-	Short: "A brief description of your command",
-	Long: `A longer description that spans multiple lines and likely contains examples
-and usage of using your command. For example:
+	Short: "Import a sumo application",
+	Long: `Import an existing folder or other set of resources. The resources
+will be broken into components (i.e. dashboards, folders, panels, variables).
+By default, the resources will be put into the 'upstream' application stream.
+You can override this behavior using the --app-stream parameter.`,
 
-Cobra is a CLI library for Go that empowers applications.
-This application is a tool to generate the needed files
-to quickly create a Cobra application.`,
 	Run: func(cmd *cobra.Command, args []string) {
 		fmt.Println("import called")
 	},
@@ -40,12 +43,5 @@ func init() {
 	rootCmd.AddCommand(importCmd)
 
 	// Here you will define your flags and configuration settings.
-
-	// Cobra supports Persistent Flags which will work for this command
-	// and all subcommands, e.g.:
-	// importCmd.PersistentFlags().String("foo", "", "A help for foo")
-
-	// Cobra supports local flags which will only run when this command
-	// is called directly, e.g.:
-	// importCmd.Flags().BoolP("toggle", "t", false, "Help message for toggle")
+	importCmd.PersistentFlags().StringVarP(&appStream, "app-stream", "s", "upstream", "Which app stream to import to")
 }
