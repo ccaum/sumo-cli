@@ -16,7 +16,7 @@ limitations under the License.
 package main
 
 import (
-	"sumologic.com/app-sdk/cmd"
+	"sumologic.com/sumo-cli/cmd"
 )
 
 func main() {

@@ -1,8 +1,10 @@
-module sumologic.com/app-sdk
+module sumologic.com/sumo-cli
 
 go 1.17
 
 require (
+	github.com/SumoLogic-Incubator/sumologic-go-sdk/service/cip v1.0.0 // indirect
+	github.com/antihax/optional v1.0.0 // indirect
 	github.com/fatih/structs v1.1.0 // indirect
 	github.com/fsnotify/fsnotify v1.5.1 // indirect
 	github.com/hashicorp/hcl v1.0.0 // indirect

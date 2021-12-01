@@ -20,7 +20,7 @@ import (
 	"os"
 
 	"github.com/spf13/cobra"
-	"sumologic.com/app-sdk/sumoapp"
+	"sumologic.com/sumo-cli/sumoapp"
 )
 
 var (
