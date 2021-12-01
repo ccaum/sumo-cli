@@ -10,9 +10,45 @@ import (
 	"github.com/imdario/mergo"
 )
 
+func loadVariables(basePath string) (map[string]variable, error) {
+	files, _ := ioutil.ReadDir(basePath)
+	vList := make(map[string]variable)
+
+	for _, file := range files {
+		curList := make(map[string]variable)
+
+		path := fmt.Sprintf("%s/%s", basePath, file.Name())
+		extension := filepath.Ext(path)
+		if extension != ".json" {
+			continue
+		}
+
+		data, err := os.ReadFile(path)
+		if err != nil {
+			err := fmt.Errorf("Unable to read file ", path, ": ", err)
+			return nil, err
+		}
+
+		if err := json.Unmarshal(data, &curList); err != nil {
+			if jsonErr, ok := err.(*json.SyntaxError); ok {
+				problemPart := data[jsonErr.Offset-10 : jsonErr.Offset+10]
+				err = fmt.Errorf("%w ~ error near '%s' (offset %d)", err, problemPart, jsonErr.Offset)
+				return nil, err
+			}
+		}
+
+		for variableName, v := range curList {
+			v.Name = variableName
+			vList[variableName] = v
+		}
+	}
+
+	return vList, nil
+}
+
 func loadPanels(basePath string) (map[string]panel, error) {
 	files, _ := ioutil.ReadDir(basePath)
-	var pList map[string]panel
+	pList := make(map[string]panel)
 
 	for _, file := range files {
 		var curList map[string]panel
@@ -37,14 +73,10 @@ func loadPanels(basePath string) (map[string]panel, error) {
 			}
 		}
 
-		if err := mergo.Merge(&pList, curList); err != nil {
-			return nil, err
+		for panelName, p := range curList {
+			p.Key = panelName
+			pList[panelName] = p
 		}
-	}
-
-	for panelName, panel := range pList {
-		//Set the Name parameter for each panel to be the value of the map's key
-		panel.Key = panelName
 	}
 
 	return pList, nil
@@ -177,6 +209,13 @@ func loadAppStreams(basePath string) ([]appStream, error) {
 		panelBasePath := fmt.Sprintf("%s/panels", stream.Path)
 		dashboardBasePath := fmt.Sprintf("%s/dashboards", stream.Path)
 		folderBasePath := fmt.Sprintf("%s/folders", stream.Path)
+		variableBasePath := fmt.Sprintf("%s/variables", stream.Path)
+
+		variables, err := loadVariables(variableBasePath)
+		if err != nil {
+			err := fmt.Errorf("Could not load variables at %s: %w", variableBasePath, err)
+			return nil, err
+		}
 
 		panels, err := loadPanels(panelBasePath)
 		if err != nil {
@@ -205,6 +244,7 @@ func loadAppStreams(basePath string) ([]appStream, error) {
 
 		stream.Application.panels = panels
 		stream.Application.dashboards = dashboards
+		stream.Application.variables = variables
 		stream.Application.folders = folders
 		stream.Application.Name = rootFolder.Name
 		stream.Application.Description = rootFolder.Description
@@ -230,7 +270,9 @@ func CompileApp(basePath string) ([]byte, error) {
 		app.Merge(stream.Application)
 	}
 
-	app.Build()
+	if err := app.Build(); err != nil {
+		return nil, err
+	}
 
 	//Compile into JSON return
 	jsonByteString, err := json.Marshal(app)

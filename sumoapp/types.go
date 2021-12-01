@@ -58,6 +58,7 @@ type application struct {
 	dashboards    map[string]dashboard
 	queries       map[string]query
 	folders       map[string]folder
+	variables     map[string]variable
 	savedSearches map[string]savedSearch
 }
 
@@ -99,8 +100,9 @@ type dashboard struct {
 	TimeRange        *timerange  `json:"timeRange"`
 	Layout           layout      `json:"layout"`
 	Panels           []panel     `json:"panels"`
-	Variables        []*variable `json:"variables"`
-	RootPanel        string      `json:"-"`
+	Variables        []variable  `json:"variables"`
+	RootPanel        string      `json:"rootPanel,omitempty"`
+	IncludeVariables []string
 }
 
 type layout struct {

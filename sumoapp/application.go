@@ -18,8 +18,28 @@ func InitApplication() *application {
 		dashboards:    make(map[string]dashboard),
 		queries:       make(map[string]query),
 		folders:       make(map[string]folder),
+		variables:     make(map[string]variable),
 		savedSearches: make(map[string]savedSearch),
 	}
+}
+
+func (a *application) mergeVariables(app *application) error {
+	for vname, variableObj := range app.variables {
+		//If a panel by the same name already exists, merge it
+		//Otherwise, add the new panel to the list of panels
+		if _, ok := a.variables[vname]; ok {
+			v := a.variables[vname]
+			if err := mergo.Merge(&v, variableObj, mergo.WithOverride); err != nil {
+				return err
+			}
+
+			a.variables[vname] = v
+		} else {
+			a.variables[vname] = variableObj
+		}
+	}
+
+	return nil
 }
 
 func (a *application) mergePanels(app *application) error {
@@ -122,6 +142,10 @@ func (a *application) Merge(app *application) error {
 		return err
 	}
 
+	if err := a.mergeVariables(app); err != nil {
+		return err
+	}
+
 	if err := a.mergeDashboards(app); err != nil {
 		return err
 	}
@@ -186,7 +210,7 @@ func (a *application) populateFolder(f *folder) error {
 }
 
 func (a *application) Build() error {
-	//Embed panels into dashboards
+	//Embed panels and variables into dashboards
 	for name, dashboard := range a.dashboards {
 		for _, layoutPanel := range dashboard.Layout.LayoutStructures {
 			if _, ok := a.panels[layoutPanel.Key]; !ok {
@@ -196,8 +220,19 @@ func (a *application) Build() error {
 
 			p := a.panels[layoutPanel.Key]
 			dashboard.Panels = append(dashboard.Panels, p)
-			a.dashboards[name] = dashboard
 		}
+
+		for _, variableName := range dashboard.IncludeVariables {
+			v, ok := a.variables[variableName]
+			if !ok {
+				err := fmt.Errorf("Could not find variable '%s'. Referenced in dashboard '%s'", variableName, dashboard.Name)
+				return err
+			}
+
+			dashboard.Variables = append(dashboard.Variables, v)
+		}
+
+		a.dashboards[name] = dashboard
 	}
 
 	//Embed folder items into the folders. This function also recursively iterates
