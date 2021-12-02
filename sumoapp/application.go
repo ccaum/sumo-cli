@@ -6,7 +6,7 @@ import (
 	"github.com/imdario/mergo"
 )
 
-func InitApplication() *application {
+func NewApplication() *application {
 	return &application{
 		Name:          "",
 		Description:   "",
@@ -17,7 +17,7 @@ func InitApplication() *application {
 		panels:        make(map[string]panel),
 		dashboards:    make(map[string]dashboard),
 		queries:       make(map[string]query),
-		folders:       make(map[string]folder),
+		folders:       make(map[string]*folder),
 		variables:     make(map[string]variable),
 		savedSearches: make(map[string]savedSearch),
 	}
@@ -180,7 +180,7 @@ func (a *application) Merge(app *application) error {
 func (a *application) populateFolder(f *folder) error {
 	for _, folderName := range f.Items["folders"] {
 		if folder, ok := a.folders[folderName]; ok {
-			if err := a.populateFolder(&folder); err != nil {
+			if err := a.populateFolder(folder); err != nil {
 				return err
 			}
 
@@ -239,7 +239,7 @@ func (a *application) Build() error {
 	//through each folder within a folder to populate that
 	for _, folderName := range a.items["folders"] {
 		if folder, ok := a.folders[folderName]; ok {
-			if err := a.populateFolder(&folder); err != nil {
+			if err := a.populateFolder(folder); err != nil {
 				return err
 			}
 

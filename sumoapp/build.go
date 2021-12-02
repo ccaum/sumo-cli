@@ -114,8 +114,8 @@ func loadRootFolder(appFilePath string) (folder, error) {
 	return app, nil
 }
 
-func loadFolders(basePath string) (map[string]folder, error) {
-	var folders map[string]folder
+func loadFolders(basePath string) (map[string]*folder, error) {
+	var folders map[string]*folder
 
 	ffiles, _ := ioutil.ReadDir(basePath)
 	for _, file := range ffiles {
@@ -203,7 +203,7 @@ func loadAppStreams(basePath string) ([]appStream, error) {
 		stream := appStream{
 			Name:        streamName,
 			Path:        fmt.Sprintf("%s/%s", basePath, streamName),
-			Application: InitApplication(),
+			Application: NewApplication(),
 		}
 
 		panelBasePath := fmt.Sprintf("%s/panels", stream.Path)
@@ -257,7 +257,7 @@ func loadAppStreams(basePath string) ([]appStream, error) {
 }
 
 func CompileApp(basePath string) ([]byte, error) {
-	app := InitApplication()
+	app := NewApplication()
 
 	//Load each app stream and all objects within the stream's app
 	streams, err := loadAppStreams(basePath)

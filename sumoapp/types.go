@@ -38,13 +38,13 @@ type layoutStructure struct {
 }
 
 type search struct {
-	QueryText        string           `json:"queryText"`
-	DefaultTimeRange string           `json:"defaultTimeRange"`
-	ByReceiptTime    bool             `json:"byReceiptTime"`
-	ViewName         string           `json:"ViewName"`
-	ViewStartTime    string           `json:"ViewStartTime"`
-	QueryParameters  []queryParameter `json:"queryParmaeters"`
-	ParsingMode      string           `json:"parsingMode"`
+	QueryText        string        `json:"queryText"`
+	DefaultTimeRange string        `json:"defaultTimeRange"`
+	ByReceiptTime    bool          `json:"byReceiptTime"`
+	ViewName         string        `json:"ViewName"`
+	ViewStartTime    string        `json:"ViewStartTime"`
+	QueryParameters  []interface{} `json:"queryParmaeters"`
+	ParsingMode      string        `json:"parsingMode"`
 }
 
 type application struct {
@@ -57,7 +57,7 @@ type application struct {
 	panels        map[string]panel
 	dashboards    map[string]dashboard
 	queries       map[string]query
-	folders       map[string]folder
+	folders       map[string]*folder
 	variables     map[string]variable
 	savedSearches map[string]savedSearch
 }
@@ -71,10 +71,10 @@ type appStream struct {
 type searchSchedule struct{}
 
 type folder struct {
-	Type          string        `json:"type"`
+	Type          string        `json:"type" yaml:"type,omitempty"`
 	Name          string        `json:"name"`
 	Description   string        `json:"description"`
-	Children      []interface{} `json:"children"`
+	Children      []interface{} `json:"children" yaml:"children,omitempty"`
 	Items         map[string][]string
 	folders       map[string]*folder
 	dashboards    map[string]dashboard
@@ -90,7 +90,7 @@ type savedSearch struct {
 }
 
 type dashboard struct {
-	Type             string      `json:"type"`
+	Type             string      `json:"type" yaml:"type,omitempty"`
 	Name             string      `json:"name"`
 	Description      string      `json:"description"`
 	Title            string      `json:"title"`
@@ -99,7 +99,7 @@ type dashboard struct {
 	RefreshInterval  int64       `json:"refreshInterval"`
 	TimeRange        *timerange  `json:"timeRange"`
 	Layout           layout      `json:"layout"`
-	Panels           []panel     `json:"panels"`
+	Panels           []panel     `json:"panels" yaml:"panels,omitempty"`
 	Variables        []variable  `json:"variables"`
 	RootPanel        string      `json:"rootPanel,omitempty"`
 	IncludeVariables []string

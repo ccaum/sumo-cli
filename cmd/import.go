@@ -17,8 +17,10 @@ package cmd
 
 import (
 	"fmt"
+	"os"
 
 	"github.com/spf13/cobra"
+	"sumologic.com/sumo-cli/sumoapp"
 )
 
 var (
@@ -35,13 +37,27 @@ By default, the resources will be put into the 'upstream' application stream.
 You can override this behavior using the --app-stream parameter.`,
 
 	Run: func(cmd *cobra.Command, args []string) {
-		fmt.Println("import called")
+		var filePath string
+
+		switch len(args) {
+		case 0:
+			fmt.Fprintf(os.Stderr, "Error: not enough arguments. Provide the json file to import. See https://help.sumologic.com/01Start-Here/Library/Export-and-Import-Content-in-the-Library#export-content-in-the-library for more information")
+			os.Exit(1)
+		case 1:
+			filePath = args[0]
+		default:
+			fmt.Fprintf(os.Stderr, "Error: too many arguments. Expects a single argument with the path to the json file to import. See https://help.sumologic.com/01Start-Here/Library/Export-and-Import-Content-in-the-Library#export-content-in-the-library for more information")
+		}
+
+		if err := sumoapp.Import(filePath, appStream); err != nil {
+			fmt.Fprintf(os.Stderr, "Error: %s", err)
+			os.Exit(1)
+		}
 	},
 }
 
 func init() {
 	rootCmd.AddCommand(importCmd)
 
-	// Here you will define your flags and configuration settings.
 	importCmd.PersistentFlags().StringVarP(&appStream, "app-stream", "s", "upstream", "Which app stream to import to")
 }
