@@ -31,7 +31,13 @@ var cfgFile string
 var rootCmd = &cobra.Command{
 	Use:   "sumo",
 	Short: "Sumo Logic CLI",
-	Long: `sumo is a Sumo Logic CLI and library for building Sumo Logic dashboards and
+	Long: ` 
+ ___ _   _ _ __ ___   ___  
+/ __| | | | '_ ' _ \ / _ \ 
+\__ \ |_| | | | | | | (_) |
+|___/\__,_|_| |_| |_|\___/ 
+
+sumo is a Sumo Logic CLI and library for building Sumo Logic dashboards and
 applications as well as interacting with Sumo Logic platform capabilities.`,
 }
 
