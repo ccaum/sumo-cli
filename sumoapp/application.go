@@ -12,7 +12,7 @@ func NewApplication() *application {
 		Description:   "",
 		Version:       "",
 		Type:          FolderType,
-		items:         make(map[string][]string),
+		Items:         make(map[string][]string),
 		Children:      make([]interface{}, 0),
 		panels:        make(map[string]panel),
 		dashboards:    make(map[string]dashboard),
@@ -100,18 +100,18 @@ func (a *application) mergeFolders(app *application) error {
 }
 
 func (a *application) mergeItems(app *application) error {
-	for iname, item := range app.items {
+	for iname, item := range app.Items {
 		//If an item by the same name already exists, merge it
 		//Otherwise, add the new item to the list of items
-		if _, ok := a.items[iname]; ok {
-			i := a.items[iname]
+		if _, ok := a.Items[iname]; ok {
+			i := a.Items[iname]
 			if err := mergo.Merge(&i, item, mergo.WithOverride); err != nil {
 				return err
 			}
 
-			a.items[iname] = i
+			a.Items[iname] = i
 		} else {
-			a.items[iname] = item
+			a.Items[iname] = item
 		}
 	}
 
@@ -184,7 +184,6 @@ func (a *application) populateFolder(f *folder) error {
 				return err
 			}
 
-			//mapFolder := toMap(folder)
 			f.Children = append(f.Children, folder)
 		} else {
 			msg := fmt.Errorf("Unable to populate folder %s. Child folder %s does not exist", folder.Name, folderName)
@@ -194,14 +193,12 @@ func (a *application) populateFolder(f *folder) error {
 
 	for _, dashboardName := range f.Items["dashboards"] {
 		if dashboard, ok := a.dashboards[dashboardName]; ok {
-			//md := toMap(dashboard)
 			f.Children = append(f.Children, dashboard)
 		}
 	}
 
 	for _, searchName := range f.Items["savedSearches"] {
 		if search, ok := a.savedSearches[searchName]; ok {
-			//mapSearch := toMap(search)
 			f.Children = append(f.Children, search)
 		}
 	}
@@ -237,7 +234,7 @@ func (a *application) Build() error {
 
 	//Embed folder items into the folders. This function also recursively iterates
 	//through each folder within a folder to populate that
-	for _, folderName := range a.items["folders"] {
+	for _, folderName := range a.Items["folders"] {
 		if folder, ok := a.folders[folderName]; ok {
 			if err := a.populateFolder(folder); err != nil {
 				return err
@@ -250,7 +247,7 @@ func (a *application) Build() error {
 	//Embed dashboarditems into the list of Children
 	//TODO: this code is dupliated in the populateFolder() function.
 	//  Consider a way to consolidate it
-	for _, dashboardName := range a.items["dashboards"] {
+	for _, dashboardName := range a.Items["dashboards"] {
 		if dash, ok := a.dashboards[dashboardName]; ok {
 			a.Children = append(a.Children, dash)
 		}
@@ -259,7 +256,7 @@ func (a *application) Build() error {
 	//Embed saved search items into the list of Children
 	//TODO: this code is dupliated in the populateFolder() function.
 	//  Consider a way to consolidate it
-	for _, searchName := range a.items["savedSearches"] {
+	for _, searchName := range a.Items["savedSearches"] {
 		if search, ok := a.savedSearches[searchName]; ok {
 			a.Children = append(a.Children, search)
 		}

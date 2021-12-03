@@ -8,6 +8,7 @@ import (
 	"path/filepath"
 
 	"github.com/imdario/mergo"
+	"gopkg.in/yaml.v2"
 )
 
 func loadVariables(basePath string) (map[string]variable, error) {
@@ -19,7 +20,7 @@ func loadVariables(basePath string) (map[string]variable, error) {
 
 		path := fmt.Sprintf("%s/%s", basePath, file.Name())
 		extension := filepath.Ext(path)
-		if extension != ".json" {
+		if extension != ".yaml" {
 			continue
 		}
 
@@ -29,12 +30,8 @@ func loadVariables(basePath string) (map[string]variable, error) {
 			return nil, err
 		}
 
-		if err := json.Unmarshal(data, &curList); err != nil {
-			if jsonErr, ok := err.(*json.SyntaxError); ok {
-				problemPart := data[jsonErr.Offset-10 : jsonErr.Offset+10]
-				err = fmt.Errorf("%w ~ error near '%s' (offset %d)", err, problemPart, jsonErr.Offset)
-				return nil, err
-			}
+		if err := yaml.Unmarshal(data, &curList); err != nil {
+			return nil, err
 		}
 
 		for variableName, v := range curList {
@@ -55,7 +52,7 @@ func loadPanels(basePath string) (map[string]panel, error) {
 
 		path := fmt.Sprintf("%s/%s", basePath, file.Name())
 		extension := filepath.Ext(path)
-		if extension != ".json" {
+		if extension != ".yaml" {
 			continue
 		}
 
@@ -65,12 +62,8 @@ func loadPanels(basePath string) (map[string]panel, error) {
 			return nil, err
 		}
 
-		if err := json.Unmarshal(data, &curList); err != nil {
-			if jsonErr, ok := err.(*json.SyntaxError); ok {
-				problemPart := data[jsonErr.Offset-10 : jsonErr.Offset+10]
-				err = fmt.Errorf("%w ~ error near '%s' (offset %d)", err, problemPart, jsonErr.Offset)
-				return nil, err
-			}
+		if err := yaml.Unmarshal(data, &curList); err != nil {
+			return nil, err
 		}
 
 		for panelName, p := range curList {
@@ -101,12 +94,8 @@ func loadRootFolder(appFilePath string) (folder, error) {
 		return folder{}, msg
 	}
 
-	if err := json.Unmarshal(data, &app); err != nil {
-		if jsonErr, ok := err.(*json.SyntaxError); ok {
-			problemPart := data[jsonErr.Offset-10 : jsonErr.Offset+10]
-			err = fmt.Errorf("%w ~ error near '%s' (offset %d)", err, problemPart, jsonErr.Offset)
-			return folder{}, err
-		}
+	if err := yaml.Unmarshal(data, &app); err != nil {
+		return folder{}, err
 	}
 
 	app.Type = FolderType
@@ -119,10 +108,10 @@ func loadFolders(basePath string) (map[string]*folder, error) {
 
 	ffiles, _ := ioutil.ReadDir(basePath)
 	for _, file := range ffiles {
-		var curList map[string]folder
+		var curList map[string]*folder
 		path := fmt.Sprintf("%s/%s", basePath, file.Name())
 		extension := filepath.Ext(path)
-		if extension != ".json" {
+		if extension != ".yaml" {
 			continue
 		}
 
@@ -132,12 +121,8 @@ func loadFolders(basePath string) (map[string]*folder, error) {
 			return nil, err
 		}
 
-		if err := json.Unmarshal(data, &curList); err != nil {
-			if jsonErr, ok := err.(*json.SyntaxError); ok {
-				problemPart := data[jsonErr.Offset-10 : jsonErr.Offset+10]
-				err = fmt.Errorf("%w ~ error near '%s' (offset %d)", err, problemPart, jsonErr.Offset)
-				return nil, err
-			}
+		if err := yaml.Unmarshal(data, &curList); err != nil {
+			return nil, err
 		}
 
 		if err := mergo.Merge(&folders, curList); err != nil {
@@ -162,7 +147,7 @@ func loadDashboards(basePath string) (map[string]dashboard, error) {
 
 		path := fmt.Sprintf("%s/%s", basePath, file.Name())
 		extension := filepath.Ext(path)
-		if extension != ".json" {
+		if extension != ".yaml" {
 			continue
 		}
 
@@ -172,12 +157,8 @@ func loadDashboards(basePath string) (map[string]dashboard, error) {
 			return nil, err
 		}
 
-		if err := json.Unmarshal(data, &curList); err != nil {
-			if jsonErr, ok := err.(*json.SyntaxError); ok {
-				problemPart := data[jsonErr.Offset-10 : jsonErr.Offset+10]
-				err = fmt.Errorf("%w ~ error near '%s' (offset %d)", err, problemPart, jsonErr.Offset)
-				return nil, err
-			}
+		if err := yaml.Unmarshal(data, &curList); err != nil {
+			return nil, err
 		}
 
 		if err := mergo.Merge(&dashboards, curList); err != nil {
@@ -186,10 +167,50 @@ func loadDashboards(basePath string) (map[string]dashboard, error) {
 	}
 
 	for name, dashboard := range dashboards {
-		dashboard.Name = name
+		dashboard.Name = dashboard.Title
+		dashboard.Type = DashboardType
+
+		dashboards[name] = dashboard
 	}
 
 	return dashboards, nil
+}
+
+func loadSavedSearches(basePath string) (map[string]savedSearch, error) {
+	var searches map[string]savedSearch
+
+	sfiles, _ := ioutil.ReadDir(basePath)
+	for _, file := range sfiles {
+		var curList map[string]savedSearch
+
+		path := fmt.Sprintf("%s/%s", basePath, file.Name())
+		extension := filepath.Ext(path)
+		if extension != ".yaml" {
+			continue
+		}
+
+		data, err := os.ReadFile(path)
+		if err != nil {
+			err := fmt.Errorf("Unable to read file ", path, ": ", err)
+			return nil, err
+		}
+
+		if err := yaml.Unmarshal(data, &curList); err != nil {
+			return nil, err
+		}
+
+		if err := mergo.Merge(&searches, curList); err != nil {
+			return nil, err
+		}
+	}
+
+	for name, search := range searches {
+		search.Type = SavedSearchType
+
+		searches[name] = search
+	}
+
+	return searches, nil
 }
 
 func loadAppStreams(basePath string) ([]appStream, error) {
@@ -210,6 +231,7 @@ func loadAppStreams(basePath string) ([]appStream, error) {
 		dashboardBasePath := fmt.Sprintf("%s/dashboards", stream.Path)
 		folderBasePath := fmt.Sprintf("%s/folders", stream.Path)
 		variableBasePath := fmt.Sprintf("%s/variables", stream.Path)
+		searchesBasePath := fmt.Sprintf("%s/saved-searches", stream.Path)
 
 		variables, err := loadVariables(variableBasePath)
 		if err != nil {
@@ -235,7 +257,13 @@ func loadAppStreams(basePath string) ([]appStream, error) {
 			return nil, err
 		}
 
-		rootPath := fmt.Sprintf("%s/init.json", stream.Path)
+		savedSearches, err := loadSavedSearches(searchesBasePath)
+		if err != nil {
+			err := fmt.Errorf("Could not load saved searches at %s: %w", folderBasePath, err)
+			return nil, err
+		}
+
+		rootPath := fmt.Sprintf("%s/init.yaml", stream.Path)
 		rootFolder, err := loadRootFolder(rootPath)
 		if err != nil {
 			err := fmt.Errorf("Could not load root application at %s: %w", rootPath, err)
@@ -246,9 +274,10 @@ func loadAppStreams(basePath string) ([]appStream, error) {
 		stream.Application.dashboards = dashboards
 		stream.Application.variables = variables
 		stream.Application.folders = folders
+		stream.Application.savedSearches = savedSearches
 		stream.Application.Name = rootFolder.Name
 		stream.Application.Description = rootFolder.Description
-		stream.Application.items = rootFolder.Items
+		stream.Application.Items = rootFolder.Items
 
 		appStreams = append(appStreams, stream)
 	}

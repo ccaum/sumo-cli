@@ -51,9 +51,9 @@ type application struct {
 	Name          string        `json:"name"`
 	Description   string        `json:"description"`
 	Version       string        `json:"version"`
-	Children      []interface{} `json:"children"`
-	Type          string        `json:"type"`
-	items         map[string][]string
+	Children      []interface{} `json:"children" yaml:"children,omitempty"`
+	Type          string        `json:"type" yaml:"type,omitempty"`
+	Items         map[string][]string
 	panels        map[string]panel
 	dashboards    map[string]dashboard
 	queries       map[string]query
@@ -82,26 +82,30 @@ type folder struct {
 }
 
 type savedSearch struct {
-	Type           string         `json:"type"`
-	Name           string         `json:"name"`
-	Description    string         `json:"description"`
-	Search         search         `json:"search"`
-	SearchSchedule searchSchedule `json:"searchSchedule"`
+	Type        string `json:"type"`
+	Name        string `json:"name"`
+	Description string `json:"description"`
+	Search      search `json:"search"`
+	//SearchSchedule searchSchedule `json:"searchSchedule"`
+}
+
+type labelMap struct {
+	Data map[string]string `json:"data,omitempty"`
 }
 
 type dashboard struct {
-	Type             string      `json:"type" yaml:"type,omitempty"`
-	Name             string      `json:"name"`
-	Description      string      `json:"description"`
-	Title            string      `json:"title"`
-	Theme            string      `json:"theme"`
-	TopologyLabelMap interface{} `json:"topologyLabelMap"`
-	RefreshInterval  int64       `json:"refreshInterval"`
-	TimeRange        *timerange  `json:"timeRange"`
-	Layout           layout      `json:"layout"`
-	Panels           []panel     `json:"panels" yaml:"panels,omitempty"`
-	Variables        []variable  `json:"variables"`
-	RootPanel        string      `json:"rootPanel,omitempty"`
+	Type             string     `json:"type" yaml:"type,omitempty"`
+	Name             string     `json:"name"`
+	Description      string     `json:"description"`
+	Title            string     `json:"title"`
+	Theme            string     `json:"theme"`
+	TopologyLabelMap labelMap   `json:"topologyLabelMap,omitempty", yaml:topologylabelmap,omitempty"`
+	RefreshInterval  int64      `json:"refreshInterval"`
+	TimeRange        *timerange `json:"timeRange"`
+	Layout           layout     `json:"layout"`
+	Panels           []panel    `json:"panels" yaml:"panels,omitempty"`
+	Variables        []variable `json:"variables" yaml:"variables,omitempty"`
+	RootPanel        string     `json:"rootPanel,omitempty"`
 	IncludeVariables []string
 }
 
@@ -122,6 +126,7 @@ type panel struct {
 	TimeRange                              *timerange `json:"timeRange"`
 	ColoringRules                          []string   `json:"coloringRules"`
 	LinkedDashboards                       []string   `json:"linkedDashboards"`
+	Text                                   string     `json:"text,omitempty"`
 }
 
 type sourceDefinition struct {
