@@ -46,7 +46,13 @@ file that can be imported into Sumo Logic's Continuous Intelligence Platform`,
 			os.Exit(1)
 		}
 
-		jsonString, err := sumoapp.CompileApp(appPath)
+		app := sumoapp.NewApplicationWithPath(appPath)
+		if err := app.LoadAppStreams(); err != nil {
+			fmt.Fprintf(os.Stderr, "Error: %s", err)
+			os.Exit(1)
+		}
+
+		jsonString, err := app.ToJSON()
 		if err != nil {
 			fmt.Fprintf(os.Stderr, "Error: %s", err)
 			os.Exit(1)

@@ -1,5 +1,7 @@
 package sumoapp
 
+import "github.com/silas/dag"
+
 type childType string
 
 const (
@@ -47,25 +49,34 @@ type search struct {
 	ParsingMode      string        `json:"parsingMode"`
 }
 
+type componentLibrary struct {
+}
+
 type application struct {
-	Name          string        `json:"name"`
-	Description   string        `json:"description"`
-	Version       string        `json:"version"`
-	Children      []interface{} `json:"children" yaml:"children,omitempty"`
-	Type          string        `json:"type" yaml:"type,omitempty"`
-	Items         map[string][]string
-	panels        map[string]panel
-	dashboards    map[string]dashboard
-	queries       map[string]query
-	folders       map[string]*folder
-	variables     map[string]variable
-	savedSearches map[string]savedSearch
+	Name        string        `json:"name"`
+	Description string        `json:"description"`
+	Version     string        `json:"version"`
+	Children    []interface{} `json:"children" yaml:"children,omitempty"`
+	Type        string        `json:"type" yaml:"type,omitempty"`
+	Items       map[string][]string
+	path        string
+	appStreams  []*appStream
 }
 
 type appStream struct {
-	Application *application
-	Path        string
-	Name        string
+	Path          string
+	Name          string
+	Application   *application
+	Parent        *appStream
+	Child         *appStream
+	Dashboards    map[string]*dashboard
+	Panels        map[string]*panel
+	SavedSearches map[string]*savedSearch
+	Variables     map[string]*variable
+	Queries       map[string]*query
+	Folders       map[string]*folder
+	RootFolder    *folder
+	Graph         *dag.AcyclicGraph
 }
 
 type searchSchedule struct{}
@@ -94,24 +105,26 @@ type labelMap struct {
 }
 
 type dashboard struct {
-	Type             string     `json:"type" yaml:"type,omitempty"`
-	Name             string     `json:"name"`
-	Description      string     `json:"description"`
-	Title            string     `json:"title"`
-	Theme            string     `json:"theme"`
-	TopologyLabelMap labelMap   `json:"topologyLabelMap,omitempty", yaml:topologylabelmap,omitempty"`
-	RefreshInterval  int64      `json:"refreshInterval"`
-	TimeRange        *timerange `json:"timeRange"`
-	Layout           layout     `json:"layout"`
-	Panels           []panel    `json:"panels" yaml:"panels,omitempty"`
-	Variables        []variable `json:"variables" yaml:"variables,omitempty"`
-	RootPanel        string     `json:"rootPanel,omitempty"`
+	Type             string      `json:"type" yaml:"type,omitempty"`
+	Name             string      `json:"name"`
+	Description      string      `json:"description"`
+	Title            string      `json:"title"`
+	Theme            string      `json:"theme"`
+	TopologyLabelMap labelMap    `json:"topologyLabelMap,omitempty", yaml:topologylabelmap,omitempty"`
+	RefreshInterval  int64       `json:"refreshInterval"`
+	TimeRange        *timerange  `json:"timeRange"`
+	Layout           layout      `json:"layout"`
+	Panels           []*panel    `json:"panels" yaml:"panels,omitempty"`
+	Variables        []*variable `json:"variables" yaml:"variables,omitempty"`
+	RootPanel        string      `json:"rootPanel,omitempty"`
 	IncludeVariables []string
+	key              string
 }
 
 type layout struct {
-	LayoutType       string            `json:"layoutType"`
-	LayoutStructures []layoutStructure `json:"layoutStructures"`
+	LayoutType             string            `json:"layoutType"`
+	LayoutStructures       []layoutStructure `json:"layoutStructures"`
+	AppendLayoutStructures []layoutStructure `json:"appendLayoutStructures,omitempty" yaml:"appendLayoutStructures,omitempty"`
 }
 
 type panel struct {
