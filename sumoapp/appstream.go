@@ -34,6 +34,101 @@ func (s *appStream) HasParent() bool {
 	return true
 }
 
+func (s *appStream) WriteObjects() error {
+	//Write the folder objects to the app stream
+	for fName, folderObj := range s.Folders {
+		folderMap := make(map[string]*folder)
+		folderMap[fName] = folderObj
+
+		y, err := yaml.Marshal(folderMap)
+		if err != nil {
+			return err
+		}
+
+		filePath := fmt.Sprintf("%s/folders/%s.yaml", s.Path, fName)
+		if err := os.WriteFile(filePath, y, 0644); err != nil {
+			return err
+		}
+	}
+
+	//Write the dashboard objects to the app stream
+	for dName, dashboardObj := range s.Dashboards {
+		dashMap := make(map[string]*dashboard)
+		dashMap[dName] = dashboardObj
+
+		y, err := yaml.Marshal(dashMap)
+		if err != nil {
+			return err
+		}
+
+		filePath := fmt.Sprintf("%s/dashboards/%s.yaml", s.Path, dName)
+		if err := os.WriteFile(filePath, y, 0644); err != nil {
+			return err
+		}
+	}
+
+	//Write the panel objects to the app stream
+	for pName, panelObj := range s.Panels {
+		panelMap := make(map[string]*panel)
+		panelMap[pName] = panelObj
+
+		p, err := yaml.Marshal(panelMap)
+		if err != nil {
+			return err
+		}
+
+		filePath := fmt.Sprintf("%s/panels/%s.yaml", s.Path, pName)
+		if err := os.WriteFile(filePath, p, 0644); err != nil {
+			return err
+		}
+	}
+
+	//Write the variable objects to the app stream
+	for vName, variableObj := range s.Variables {
+		variableMap := make(map[string]*variable)
+		variableMap[vName] = variableObj
+
+		v, err := yaml.Marshal(variableMap)
+		if err != nil {
+			return err
+		}
+
+		filePath := fmt.Sprintf("%s/variables/%s.yaml", s.Path, vName)
+		if err := os.WriteFile(filePath, v, 0644); err != nil {
+			return err
+		}
+	}
+
+	//Write the saved search objects to the app stream
+	for sName, searchObj := range s.SavedSearches {
+		searchMap := make(map[string]*savedSearch)
+		searchMap[sName] = searchObj
+
+		v, err := yaml.Marshal(searchMap)
+		if err != nil {
+			return err
+		}
+
+		filePath := fmt.Sprintf("%s/saved-searches/%s.yaml", s.Path, sName)
+		if err := os.WriteFile(filePath, v, 0644); err != nil {
+			return err
+		}
+	}
+
+	//Write the application's definition to the init file in the stream
+	a, err := yaml.Marshal(s.Application)
+	if err != nil {
+		return err
+	}
+
+	filePath := fmt.Sprintf("%s/init.yaml", s.Path)
+	if err := os.WriteFile(filePath, a, 0644); err != nil {
+		return err
+	}
+
+	return nil
+}
+
 func (s *appStream) populateFolder(f *folder) error {
 	//Children was inherited from the parent stream. It needs to be cleared
 	//or objects will be appear in the list multiple times.
@@ -49,7 +144,7 @@ func (s *appStream) populateFolder(f *folder) error {
 
 			f.Children = append(f.Children, folder)
 		} else {
-			msg := fmt.Errorf("Unable to populate folder %s. Child folder %s does not exist", folder.Name, folderName)
+			msg := fmt.Errorf("Unable to populate folder %s. Child folder %s does not exist", folderName, folderName)
 			return msg
 		}
 	}
@@ -464,7 +559,7 @@ func (s *appStream) Load() error {
 	var err error
 
 	panelBasePath := fmt.Sprintf("%s/panels", s.Path)
-	dashboardBasePath := fmt.Sprintf("%s/dashboards", s.Path)
+	dashboardBasePath := fmt.Sprintf("%s//dashboards", s.Path)
 	folderBasePath := fmt.Sprintf("%s/folders", s.Path)
 	variableBasePath := fmt.Sprintf("%s/variables", s.Path)
 	searchesBasePath := fmt.Sprintf("%s/saved-searches", s.Path)
