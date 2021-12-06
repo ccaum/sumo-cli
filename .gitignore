@@ -4,3 +4,4 @@
 cls
 sumo
 test/myapp*
+*.swp
