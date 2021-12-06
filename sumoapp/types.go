@@ -75,13 +75,6 @@ type appStream struct {
 
 type searchSchedule struct{}
 
-type component struct {
-	Type     string
-	Object   *interface{}
-	Parent   *component
-	Children []*component
-}
-
 type folder struct {
 	Type          string        `json:"type" yaml:"type,omitempty"`
 	Name          string        `json:"name"`
@@ -94,11 +87,11 @@ type folder struct {
 }
 
 type savedSearch struct {
-	Type        string `json:"type"`
-	Name        string `json:"name"`
-	Description string `json:"description"`
-	Search      search `json:"search"`
-	//SearchSchedule searchSchedule `json:"searchSchedule"`
+	Type           string         `json:"type"`
+	Name           string         `json:"name"`
+	Description    string         `json:"description"`
+	Search         search         `json:"search"`
+	SearchSchedule searchSchedule `json:"searchSchedule"`
 }
 
 type labelMap struct {
@@ -120,8 +113,6 @@ type dashboard struct {
 	RootPanel        string      `json:"rootPanel,omitempty"`
 	IncludeVariables []string
 	key              string
-	parent           *dashboard
-	stream           *appStream
 }
 
 type layout struct {
