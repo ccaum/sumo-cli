@@ -25,7 +25,6 @@ import (
 
 var (
 	appStream string
-	appPath   string
 )
 
 // importCmd represents the import command
@@ -59,8 +58,7 @@ You can override this behavior using the --app-stream parameter.`,
 }
 
 func init() {
-	rootCmd.AddCommand(importCmd)
+	appCmd.AddCommand(importCmd)
 
 	importCmd.PersistentFlags().StringVarP(&appStream, "app-stream", "s", "upstream", "Which app stream to import to")
-	importCmd.PersistentFlags().StringVarP(&appPath, "app-path", "p", ".", "The path to the application")
 }

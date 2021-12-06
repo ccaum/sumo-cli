@@ -1,0 +1,71 @@
+/*
+Copyright © 2021 Carl Caum <carl@carlcaum.com>
+
+Licensed under the Apache License, Version 2.0 (the "License");
+you may not use this file except in compliance with the License.
+You may obtain a copy of the License at
+
+    http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+See the License for the specific language governing permissions and
+limitations under the License.
+*/
+package cmd
+
+import (
+	"fmt"
+	"os"
+
+	"github.com/spf13/cobra"
+	"sumologic.com/sumo-cli/sumoapp"
+)
+
+// diffStreamsCmd represents the diff-streams command
+var diffStreamsCmd = &cobra.Command{
+	Use:   "diff-streams [stream name] [stream name]",
+	Short: "Diff objects between two app streams",
+	Long: `List all differences between two app streams. This command will compare
+all of the folders, dashbaords, panels, saved searches, and variables between two
+app streams and list all of the objects that are created, deleted, and modified,
+including what modifications are made.`,
+	Run: func(cmd *cobra.Command, args []string) {
+		if len(args) != 2 {
+			fmt.Fprintf(os.Stderr, "Error: wrong number of arguments. Expects two. Use --help to learn more")
+			os.Exit(1)
+		}
+
+		appStream1 := args[0]
+		appStream2 := args[1]
+
+		app := sumoapp.NewApplicationWithPath(appPath)
+		if err := app.LoadAppStreams(); err != nil {
+			msg := fmt.Errorf("Unable to load app streams: %w", err)
+			fmt.Println(msg)
+			os.Exit(1)
+		}
+
+		stream1, err := app.FindAppStream(appStream1)
+		if err != nil {
+			msg := fmt.Errorf("Unable to load app stream %s: %w", appStream1, err)
+			fmt.Println(msg)
+			os.Exit(1)
+		}
+
+		stream2, err := app.FindAppStream(appStream2)
+		if err != nil {
+			msg := fmt.Errorf("Unable to load app stream %s: %w", appStream2, err)
+			fmt.Println(msg)
+			os.Exit(1)
+		}
+
+		stream1.Diff(stream2)
+
+	},
+}
+
+func init() {
+	appCmd.AddCommand(diffStreamsCmd)
+}

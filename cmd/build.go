@@ -34,19 +34,19 @@ var buildCmd = &cobra.Command{
 	Long: `Compiles all the application streams into a single JSON
 file that can be imported into Sumo Logic's Continuous Intelligence Platform`,
 	Run: func(cmd *cobra.Command, args []string) {
-		var appPath string
+		var path string
 
 		switch len(args) {
 		case 0:
-			appPath = "./"
+			path = appPath
 		case 1:
-			appPath = args[0]
+			path = args[0]
 		default:
 			fmt.Fprintf(os.Stderr, "Error: too many arguments. Expects none or one. Use --help to learn more")
 			os.Exit(1)
 		}
 
-		app := sumoapp.NewApplicationWithPath(appPath)
+		app := sumoapp.NewApplicationWithPath(path)
 		if err := app.LoadAppStreams(); err != nil {
 			fmt.Fprintf(os.Stderr, "Error: %s", err)
 			os.Exit(1)
@@ -71,7 +71,7 @@ file that can be imported into Sumo Logic's Continuous Intelligence Platform`,
 }
 
 func init() {
-	rootCmd.AddCommand(buildCmd)
+	appCmd.AddCommand(buildCmd)
 
 	buildCmd.PersistentFlags().StringVarP(&outputFile, "output-file", "o", "", "Output file containing the compiled JSON")
 }
