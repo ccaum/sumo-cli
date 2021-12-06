@@ -87,11 +87,11 @@ type folder struct {
 }
 
 type savedSearch struct {
-	Type           string         `json:"type"`
-	Name           string         `json:"name"`
-	Description    string         `json:"description"`
-	Search         search         `json:"search"`
-	SearchSchedule searchSchedule `json:"searchSchedule"`
+	Type        string `json:"type"`
+	Name        string `json:"name"`
+	Description string `json:"description"`
+	Search      search `json:"search"`
+	//SearchSchedule searchSchedule `json:"searchSchedule"` TODO: Add this back in. The searchSchedule type needs to be defined first
 }
 
 type labelMap struct {
