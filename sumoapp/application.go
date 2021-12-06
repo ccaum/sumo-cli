@@ -170,6 +170,7 @@ func (a *application) Import(pathToFileToImport string, appstream string) error 
 
 	return nil
 }
+
 func (a *application) NewAppStream(name string) *appStream {
 	stream := NewAppStream(name, a)
 	return stream
