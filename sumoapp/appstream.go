@@ -7,6 +7,7 @@ import (
 	"path/filepath"
 
 	"github.com/imdario/mergo"
+	"github.com/r3labs/diff"
 	"gopkg.in/yaml.v2"
 )
 
@@ -32,6 +33,24 @@ func (s *appStream) HasParent() bool {
 	}
 
 	return true
+}
+
+func (s *appStream) Diff(diffStream *appStream) (diff.Changelog, error) {
+	changelog, err := diff.Diff(s.Panels, diffStream.Panels)
+	if err != nil {
+		return nil, err
+	}
+
+	fmt.Println("Found", len(changelog), "changes")
+	for _, change := range changelog {
+		fmt.Println("")
+		fmt.Println("TYPE: ", change.Type)
+		fmt.Println("PATH: ", change.Path)
+		fmt.Println("FROM: ", change.From)
+		fmt.Println("TO: ", change.To)
+	}
+
+	return changelog, nil
 }
 
 func (s *appStream) WriteObjects() error {
@@ -165,7 +184,7 @@ func (s *appStream) populateFolder(f *folder) error {
 }
 
 func (s *appStream) loadDashboards(basePath string) error {
-	var dashboards map[string]*dashboard
+	dashboards := make(map[string]*dashboard)
 
 	dfiles, err := ioutil.ReadDir(basePath)
 	if err != nil {
@@ -196,18 +215,27 @@ func (s *appStream) loadDashboards(basePath string) error {
 		}
 	}
 
-	//First copy the parent's panel list into a local list that
-	//can be overwritten with new panel values. Each dashboard
-	//will need to be iterated over and populated since this app
-	//stream may have overwritten panels or variables in dashboards
-	//defined in previous app streams
-	if s.HasParent() {
-		s.Dashboards = s.Parent.Dashboards
-	}
+	s.Dashboards = dashboards
 
-	ds := s.Dashboards
-	if err := mergo.Merge(&ds, dashboards, mergo.WithOverride); err != nil {
-		return err
+	//Append the dashboards defined in the parent stream that are NOT
+	//overwritten in this stream. Dashboards that have overwrites in this
+	//stream will be merged with their parent dashboard and the new
+	//object will be added to this stream's list of dashboards
+	if s.HasParent() {
+		for name, pd := range s.Parent.Dashboards {
+			//If the parent stream has a dashboard by the same name
+			//merge the current dashboard with its parent
+			d, ok := s.Dashboards[name]
+			if !ok {
+				s.Dashboards[name] = pd
+			} else {
+				if err := d.Merge(pd); err != nil {
+					return err
+				}
+
+				s.Dashboards[name] = d
+			}
+		}
 	}
 
 	//TODO: This should leverage go functions to parallelize the
@@ -215,6 +243,12 @@ func (s *appStream) loadDashboards(basePath string) error {
 	//serialized
 	for name, dash := range s.Dashboards {
 		dash.key = name
+
+		//Ensure we have clean lists in case the object was inherited
+		//from the parent stream. The Populate() function will repopulate
+		//the panels and variables
+		dash.Panels = make([]*panel, 0)
+		dash.Variables = make([]*variable, 0)
 
 		if dash.Populate(s); err != nil {
 			return err
@@ -254,15 +288,6 @@ func (s *appStream) loadVariables(basePath string) error {
 		if err := mergo.Merge(&variables, curList); err != nil {
 			return err
 		}
-	}
-
-	//First copy the parent's variables list into a local list that
-	//can be overwritten with new panel values
-	//Later, variables found in this stream will need to be merged
-	//with the parent variables's object, if it exists, before updating
-	//this stream's variable pointer to the new merged object
-	if s.HasParent() {
-		s.Variables = s.Parent.Variables
 	}
 
 	for name, varObj := range variables {
@@ -435,6 +460,23 @@ func (s *appStream) loadRootFolder(appFilePath string) error {
 	return nil
 }
 
+//func (s *appStream) findObjectsInParents(objectType string, name string) ([]*interface{}, error) {
+//	foundObjects := make([]*interface{}, 0)
+//
+//	if s.HasParent() {
+//		f, err := s.Parent.findObjectInParents(objectType, name)
+//		if err != nil {
+//			return nil, err
+//		}
+//
+//		for _, v := range f {
+//			foundObjects = append(foundObjects, v)
+//		}
+//	}
+//
+//	return foundObjects, nil
+//}
+
 func (s *appStream) loadFolders(basePath string) error {
 	var folders map[string]*folder
 
@@ -559,7 +601,7 @@ func (s *appStream) Load() error {
 	var err error
 
 	panelBasePath := fmt.Sprintf("%s/panels", s.Path)
-	dashboardBasePath := fmt.Sprintf("%s//dashboards", s.Path)
+	dashboardBasePath := fmt.Sprintf("%s/dashboards", s.Path)
 	folderBasePath := fmt.Sprintf("%s/folders", s.Path)
 	variableBasePath := fmt.Sprintf("%s/variables", s.Path)
 	searchesBasePath := fmt.Sprintf("%s/saved-searches", s.Path)

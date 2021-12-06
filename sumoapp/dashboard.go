@@ -6,8 +6,8 @@ import (
 	"github.com/imdario/mergo"
 )
 
-func copyDashboardList(dList map[string]dashboard) map[string]dashboard {
-	newList := make(map[string]dashboard)
+func copyDashboardList(dList map[string]*dashboard) map[string]*dashboard {
+	newList := make(map[string]*dashboard)
 
 	for dName, d := range dList {
 		newList[dName] = d.Copy()
@@ -17,15 +17,21 @@ func copyDashboardList(dList map[string]dashboard) map[string]dashboard {
 }
 
 func (d *dashboard) Merge(dash *dashboard) error {
-	if err := mergo.Merge(d, dash, mergo.WithOverride); err != nil {
+	newDash := dash.Copy()
+
+	if err := mergo.Merge(newDash, d, mergo.WithOverride); err != nil {
+		return err
+	}
+
+	if err := mergo.Merge(d, newDash, mergo.WithOverride); err != nil {
 		return err
 	}
 
 	return nil
 }
 
-func (d *dashboard) Copy() dashboard {
-	newDashboard := dashboard{
+func (d *dashboard) Copy() *dashboard {
+	return &dashboard{
 		Type:             d.Type,
 		Name:             d.Name,
 		Description:      d.Description,
@@ -40,34 +46,12 @@ func (d *dashboard) Copy() dashboard {
 		RootPanel:        d.RootPanel,
 		IncludeVariables: d.IncludeVariables,
 	}
-
-	return newDashboard
 }
 
 func (d *dashboard) Populate(stream *appStream) error {
-	//If the parent stream already has a dashboard in
-	//its component library, merge it with the one in this
-	//app stream and save the new merged object in this app stream's
-	//component library
-	if stream.HasParent() {
-		appDash, err := stream.Parent.FindDashboard(d.key)
-		if err == nil {
-			d.Merge(appDash)
-		}
-	}
-
-	d.Type = DashboardType
-
-	stream.Dashboards[d.key] = d
-
 	//Populate the dashboard with the panels and variables
 	//It is very important the the panels and variables have been
 	//loaded before calling this function
-
-	//Since d.Panels was inherited from the parent stream,
-	//a new list is required
-	//TODO This shouldn't be necessary. Maybe strip Panels in the Merge() function?
-	d.Panels = make([]*panel, 0)
 
 	for _, layoutPanel := range d.Layout.LayoutStructures {
 		if _, ok := stream.Panels[layoutPanel.Key]; !ok {
@@ -76,6 +60,7 @@ func (d *dashboard) Populate(stream *appStream) error {
 		}
 
 		p := stream.Panels[layoutPanel.Key]
+
 		d.Panels = append(d.Panels, p)
 	}
 
@@ -92,11 +77,6 @@ func (d *dashboard) Populate(stream *appStream) error {
 		p := stream.Panels[layoutPanel.Key]
 		d.Panels = append(d.Panels, p)
 	}
-
-	//Since d.Variables was inherited from the parent stream,
-	//a new list is required
-	//TODO This shouldn't be necessary. Maybe strip Panels in the Merge() function?
-	d.Variables = make([]*variable, 0)
 
 	for _, variableName := range d.IncludeVariables {
 		v, ok := stream.Variables[variableName]

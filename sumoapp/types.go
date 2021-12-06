@@ -1,7 +1,5 @@
 package sumoapp
 
-import "github.com/silas/dag"
-
 type childType string
 
 const (
@@ -49,9 +47,6 @@ type search struct {
 	ParsingMode      string        `json:"parsingMode"`
 }
 
-type componentLibrary struct {
-}
-
 type application struct {
 	Name        string        `json:"name"`
 	Description string        `json:"description"`
@@ -76,10 +71,16 @@ type appStream struct {
 	Queries       map[string]*query
 	Folders       map[string]*folder
 	RootFolder    *folder
-	Graph         *dag.AcyclicGraph
 }
 
 type searchSchedule struct{}
+
+type component struct {
+	Type     string
+	Object   *interface{}
+	Parent   *component
+	Children []*component
+}
 
 type folder struct {
 	Type          string        `json:"type" yaml:"type,omitempty"`
@@ -119,6 +120,8 @@ type dashboard struct {
 	RootPanel        string      `json:"rootPanel,omitempty"`
 	IncludeVariables []string
 	key              string
+	parent           *dashboard
+	stream           *appStream
 }
 
 type layout struct {
