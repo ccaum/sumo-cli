@@ -36,7 +36,7 @@ func (s *appStream) HasParent() bool {
 }
 
 func (s *appStream) Diff(diffStream *appStream) (diff.Changelog, error) {
-	changelog, err := diff.Diff(s.Panels, diffStream.Panels)
+	changelog, err := diff.Diff(s.Dashboards, diffStream.Dashboards)
 	if err != nil {
 		return nil, err
 	}
@@ -243,6 +243,7 @@ func (s *appStream) loadDashboards(basePath string) error {
 	//serialized
 	for name, dash := range s.Dashboards {
 		dash.key = name
+		dash.Type = DashboardType
 
 		//Ensure we have clean lists in case the object was inherited
 		//from the parent stream. The Populate() function will repopulate
@@ -259,7 +260,7 @@ func (s *appStream) loadDashboards(basePath string) error {
 }
 
 func (s *appStream) loadVariables(basePath string) error {
-	var variables map[string]*variable
+	variables := make(map[string]*variable)
 
 	files, err := ioutil.ReadDir(basePath)
 	if err != nil {
@@ -290,28 +291,38 @@ func (s *appStream) loadVariables(basePath string) error {
 		}
 	}
 
-	for name, varObj := range variables {
-		//If the parent stream already has a variable in
-		//its component library, merge it with the one in this
-		//app stream and save the new merged object in this app stream's
-		//component library
-		if s.HasParent() {
-			appVar, err := s.Parent.FindVariable(name)
-			if err == nil {
-				varObj.Merge(appVar)
+	s.Variables = variables
+
+	//Append the variables defined in the parent stream that are NOT
+	//overwritten in this stream. Variables that have overwrites in this
+	//stream will be merged with their parent variable and the new
+	//object will be added to this stream's list of variables
+	if s.HasParent() {
+		for name, pv := range s.Parent.Variables {
+			//If the parent stream has a variable by the same name
+			//merge the current variable with its parent
+			v, ok := s.Variables[name]
+			if !ok {
+				s.Variables[name] = pv
+			} else {
+				if err := v.Merge(pv); err != nil {
+					return err
+				}
+
+				s.Variables[name] = v
 			}
 		}
+	}
 
+	for name, varObj := range variables {
 		varObj.Name = name
-
-		s.Variables[name] = varObj
 	}
 
 	return nil
 }
 
 func (s *appStream) loadPanels(basePath string) error {
-	var panels map[string]*panel
+	panels := make(map[string]*panel)
 
 	//Load the panel files from this stream's file system
 	files, err := ioutil.ReadDir(basePath)
@@ -343,29 +354,31 @@ func (s *appStream) loadPanels(basePath string) error {
 		}
 	}
 
-	//First copy the parent's panel list into a local list that
-	//can be overwritten with new panel values
-	//Later, panels found in this stream will need to be merged
-	//with the parent panel's object, if it exists, before updating
-	//this stream's panel pointer to the new merged object
-	if s.HasParent() {
-		s.Panels = s.Parent.Panels
-	}
+	s.Panels = panels
 
-	for name, panel := range panels {
-		//If the parent stream already has a panel in
-		//its component library, merge it with the one in this
-		//app stream and save the new merged object in this app stream's
-		//component library
-		if s.HasParent() {
-			appPanel, err := s.Parent.FindPanel(name)
-			if err == nil {
-				panel.Merge(appPanel)
+	//Append the panels defined in the parent stream that are NOT
+	//overwritten in this stream. Panels that have overwrites in this
+	//stream will be merged with their parent panel and the new
+	//object will be added to this stream's list of dashboards
+	if s.HasParent() {
+		for name, pp := range s.Parent.Panels {
+			//If the parent stream has a panel by the same name
+			//merge the current dashboard with its parent
+			p, ok := s.Panels[name]
+			if !ok {
+				s.Panels[name] = pp
+			} else {
+				if err := p.Merge(pp); err != nil {
+					return err
+				}
+
+				s.Panels[name] = p
 			}
 		}
+	}
 
-		panel.Key = name
-		s.Panels[name] = panel
+	for name, pan := range s.Panels {
+		pan.Key = name
 	}
 
 	return nil
@@ -460,25 +473,8 @@ func (s *appStream) loadRootFolder(appFilePath string) error {
 	return nil
 }
 
-//func (s *appStream) findObjectsInParents(objectType string, name string) ([]*interface{}, error) {
-//	foundObjects := make([]*interface{}, 0)
-//
-//	if s.HasParent() {
-//		f, err := s.Parent.findObjectInParents(objectType, name)
-//		if err != nil {
-//			return nil, err
-//		}
-//
-//		for _, v := range f {
-//			foundObjects = append(foundObjects, v)
-//		}
-//	}
-//
-//	return foundObjects, nil
-//}
-
 func (s *appStream) loadFolders(basePath string) error {
-	var folders map[string]*folder
+	folders := make(map[string]*folder)
 
 	ffiles, err := ioutil.ReadDir(basePath)
 	if err != nil {
@@ -509,36 +505,40 @@ func (s *appStream) loadFolders(basePath string) error {
 		}
 	}
 
-	//First copy the parent's folder list into a local list that
-	//can be overwritten with new folder values
-	//Later, folders found in this stream will need to be merged
-	//with the parent folders's object, if it exists, before updating
-	//this stream's folder pointer to the new merged object
-	if s.HasParent() {
-		s.Folders = s.Parent.Folders
-	}
+	s.Folders = folders
 
-	for name, foldObj := range folders {
-		//If the parent stream already has a folder with the same name in
-		//its component library, merge it with the one in this
-		//app stream and save the new merged object in this app stream's
-		//component library
-		if s.HasParent() {
-			appFolder, err := s.Parent.FindFolder(name)
-			if err == nil {
-				foldObj.Merge(appFolder)
+	//Append the folders defined in the parent stream that are NOT
+	//overwritten in this stream. Folders that have overwrites in this
+	//stream will be merged with their parent folder and the new
+	//object will be added to this stream's list of folders
+	if s.HasParent() {
+		for name, pf := range s.Parent.Folders {
+			//If the parent stream has a folder by the same name
+			//merge the current folder with its parent
+			f, ok := s.Folders[name]
+			if !ok {
+				s.Folders[name] = pf
+			} else {
+				if err := f.Merge(pf); err != nil {
+					return err
+				}
+
+				s.Folders[name] = f
 			}
 		}
+	}
 
+	//Ensure all the folder objects are annotated properly.
+	//There might be a more efficient way to do this
+	for _, foldObj := range s.Folders {
 		foldObj.Type = FolderType
-		s.Folders[name] = foldObj
 	}
 
 	return nil
 }
 
 func (s *appStream) loadSavedSearches(basePath string) error {
-	var searches map[string]*savedSearch
+	searches := make(map[string]*savedSearch)
 
 	sfiles, err := ioutil.ReadDir(basePath)
 	if err != nil {
@@ -569,29 +569,33 @@ func (s *appStream) loadSavedSearches(basePath string) error {
 		}
 	}
 
-	//First copy the parent's saved search list into a local list that
-	//can be overwritten with new saved search values
-	//Later, saved searches found in this stream will be merged
-	//with the parent search's object, if it exists, before updating
-	//this stream's search pointer to the new merged object
-	if s.HasParent() {
-		s.SavedSearches = s.Parent.SavedSearches
-	}
+	s.SavedSearches = searches
 
-	for name, search := range searches {
-		//If the parent stream already has a saved search with the same name in
-		//its component library, merge it with the one in this
-		//app stream and save the new merged object in this app stream's
-		//component library
-		if s.HasParent() {
-			appSearch, err := s.Parent.FindSavedSearch(name)
-			if err == nil {
-				search.Merge(appSearch)
+	//Append the searches defined in the parent stream that are NOT
+	//overwritten in this stream. Searches that have overwrites in this
+	//stream will be merged with their parent search and the new
+	//object will be added to this stream's list of searches
+	if s.HasParent() {
+		for name, ps := range s.Parent.SavedSearches {
+			//If the parent stream has a search by the same name
+			//merge the current search with its parent
+			ss, ok := s.SavedSearches[name]
+			if !ok {
+				s.SavedSearches[name] = ps
+			} else {
+				if err := ss.Merge(ps); err != nil {
+					return err
+				}
+
+				s.SavedSearches[name] = ss
 			}
 		}
+	}
 
+	//Ensure all the search objects are annotated properly.
+	//There might be a more efficient way to do this
+	for _, search := range s.Folders {
 		search.Type = SavedSearchType
-		s.SavedSearches[name] = search
 	}
 
 	return nil
