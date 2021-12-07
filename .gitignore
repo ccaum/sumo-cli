@@ -5,3 +5,5 @@ cls
 sumo
 test/myapp*
 *.swp
+*darwin*
+*linux*
