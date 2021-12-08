@@ -122,6 +122,10 @@ func (a *application) BasePath() string {
 }
 
 func (a *application) Import(pathToFileToImport string, appstream string) error {
+	return a.ImportWithWriteOption(pathToFileToImport, appstream, true)
+}
+
+func (a *application) ImportWithWriteOption(pathToFileToImport string, appstream string, writeObjects bool) error {
 	rootFolder := NewFolder()
 
 	if err := a.LoadAppStreams(); err != nil {
