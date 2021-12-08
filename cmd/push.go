@@ -22,6 +22,7 @@ import (
 	"os"
 
 	"github.com/spf13/cobra"
+	"github.com/spf13/viper"
 	"sumologic.com/sumo-cli/sumoapp"
 )
 
@@ -29,15 +30,13 @@ var (
 	appDestinationParent    string
 	appDestinationName      string
 	appDestinationOverwrite bool
-	accessKey               string
-	accessId                string
-	region                  string
 )
 
 // pushCmd represents the push command
 var pushCmd = &cobra.Command{
 	Use:   "push",
 	Short: "Push an application build to your Sumo Logic account",
+	Args:  cobra.MinimumNArgs(1),
 	Long: `Push an application build (a json file, see 'sumo app build --help' for more information) to
 your Sumo Logic organization.`,
 	Run: func(cmd *cobra.Command, args []string) {
@@ -46,7 +45,11 @@ your Sumo Logic organization.`,
 
 		rootFolder := sumoapp.NewFolder()
 
-		if region == "" {
+		accessId := viper.GetString("access-id")
+		accessKey := viper.GetString("access-key")
+		region := viper.GetString("deployment")
+
+		if region == "us1" {
 			apiURL = "https://api.sumologic.com/api"
 		} else {
 			apiURL = fmt.Sprintf("https://api.%s.sumologic.com/api", region)
@@ -104,10 +107,6 @@ your Sumo Logic organization.`,
 func init() {
 	appCmd.AddCommand(pushCmd)
 
-	pushCmd.PersistentFlags().StringVarP(&appDestinationParent, "parent-folder", "d", "personal", "What folder to put the application into")
-	//pushCmd.PersistentFlags().StringVarP(&appDestinationName, "folder-name", "f", "", "What name to use for the folder containing the application. Defaults to the root application name defined in application's init.yaml file")
-	pushCmd.PersistentFlags().StringVarP(&accessId, "access-id", "i", "", "Your Sumo Logic access ID")
-	pushCmd.PersistentFlags().StringVarP(&accessKey, "access-key", "k", "", "Your Sumo Logic access key")
-	pushCmd.PersistentFlags().StringVarP(&region, "deployment", "r", "", "The deployment code for you Sumo Logic instance")
+	pushCmd.PersistentFlags().StringVarP(&appDestinationParent, "parent-folder", "d", "", "ID of the folder to put the application into")
 	pushCmd.PersistentFlags().BoolP("overwrite", "w", false, "Whether to overwrite an existing destination folder")
 }

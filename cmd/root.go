@@ -16,8 +16,7 @@ limitations under the License.
 package cmd
 
 import (
-	"fmt"
-	"os"
+	"strings"
 
 	"github.com/spf13/cobra"
 
@@ -55,6 +54,13 @@ func init() {
 	// will be global for your application.
 
 	rootCmd.PersistentFlags().StringVar(&cfgFile, "config", "", "config file (default is $HOME/.sumo-cli)")
+	rootCmd.PersistentFlags().StringP("access-id", "i", "", "Your Sumo Logic access ID")
+	rootCmd.PersistentFlags().StringP("access-key", "k", "", "Your Sumo Logic access key")
+	rootCmd.PersistentFlags().StringP("deployment", "r", "us1", "The deployment code for you Sumo Logic instance")
+
+	viper.BindPFlag("access-key", rootCmd.PersistentFlags().Lookup("access-key"))
+	viper.BindPFlag("access-id", rootCmd.PersistentFlags().Lookup("access-id"))
+	viper.BindPFlag("deployment", rootCmd.PersistentFlags().Lookup("deployment"))
 }
 
 // initConfig reads in config file and ENV variables if set.
@@ -70,12 +76,13 @@ func initConfig() {
 		// Search config in home directory with name ".sumo-cli" (without extension).
 		viper.AddConfigPath(home)
 		viper.SetConfigName(".sumo-cli")
+		viper.SetConfigType("yaml")
+		viper.SetEnvPrefix("SUMO")
+		viper.SetEnvKeyReplacer(strings.NewReplacer("-", "_"))
 	}
 
 	viper.AutomaticEnv() // read in environment variables that match
 
 	// If a config file is found, read it in.
-	if err := viper.ReadInConfig(); err == nil {
-		fmt.Fprintln(os.Stderr, "Using config file:", viper.ConfigFileUsed())
-	}
+	viper.ReadInConfig()
 }
