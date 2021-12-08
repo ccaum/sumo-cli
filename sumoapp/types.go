@@ -140,6 +140,9 @@ type sourceDefinition struct {
 	VariableSourceType string `yaml:"variableSourceType"`
 	Query              string `yaml:"query"`
 	Field              string `yaml:"field"`
+	Filter             string `yaml:"filter,omitempty"`
+	Key                string `yaml:"key,omitempty"`
+	Values             string `yaml:"values,omitempty"`
 }
 
 type variable struct {
