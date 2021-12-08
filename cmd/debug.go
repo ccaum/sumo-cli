@@ -5,6 +5,7 @@ import (
 	"os"
 
 	"github.com/spf13/cobra"
+	"gopkg.in/yaml.v2"
 	"sumologic.com/sumo-cli/sumoapp"
 )
 
@@ -48,17 +49,26 @@ var debugLoadCmd = &cobra.Command{
 
 		switch thetype {
 		case "variable":
-			fmt.Print(stream.Variables[key])
+			WriteYamlObject(stream.Variables[key])
 		case "panel":
-			fmt.Print(stream.Panels[key])
+			WriteYamlObject(stream.Panels[key])
 		case "saved-search":
-			fmt.Print(stream.SavedSearches[key])
+			WriteYamlObject(stream.SavedSearches[key])
 		case "dashboards":
-			fmt.Print(stream.Dashboards[key])
+			WriteYamlObject(stream.Dashboards[key])
 		case "folder":
-			fmt.Print(stream.Folders[key])
+			WriteYamlObject(stream.Folders[key])
 		}
 	},
+}
+
+func WriteYamlObject(object interface{}) {
+	p, err := yaml.Marshal(&object)
+	if err != nil {
+		msg := fmt.Errorf("Unable to marshall: %w", err)
+		fmt.Print(msg)
+	}
+	fmt.Print(string(p))
 }
 
 func init() {
