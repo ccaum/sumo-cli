@@ -9,25 +9,25 @@ const (
 )
 
 type timeBoundary struct {
-	Type         string `json:"type,omitempty"`
-	RelativeTime string `json:"relativeTime,omitempty"`
+	Type         string `yaml:"type,omitempty"`
+	RelativeTime string `yaml:"relativeTime,omitempty"`
 }
 
 type timerange struct {
-	Type string        `json:"type"`
-	From *timeBoundary `json:"from"`
-	To   *timeBoundary `json:"to,omitempty"`
+	Type string        `yaml:"type"`
+	From *timeBoundary `yaml:"from"`
+	To   *timeBoundary `yaml:"to,omitempty"`
 }
 
 type query struct {
-	QueryString      string `json:"queryString"`
-	QueryType        string `json:"queryType"`
-	QueryKey         string `json:"queryKey"`
-	MetricsQueryMode string `json:"metricsQueryMode,omitempty"`
-	MetricsQueryData string `json:"metricsQueryData,omitempty"`
-	TracesQueryData  string `json:"tracesQueryData,omitempty"`
-	ParseMode        string `json:"parseMode,omitempty"`
-	TimeSource       string `json:"timeSource,omitempty"`
+	QueryString      string `yaml:"queryString"`
+	QueryType        string `yaml:"queryType"`
+	QueryKey         string `yaml:"queryKey"`
+	MetricsQueryMode string `yaml:"metricsQueryMode,omitempty"`
+	MetricsQueryData string `yaml:"metricsQueryData,omitempty"`
+	TracesQueryData  string `yaml:"tracesQueryData,omitempty"`
+	ParseMode        string `yaml:"parseMode,omitempty"`
+	TimeSource       string `yaml:"timeSource,omitempty"`
 }
 
 type queryParameter struct{}
@@ -38,13 +38,13 @@ type layoutStructure struct {
 }
 
 type search struct {
-	QueryText        string        `json:"queryText"`
-	DefaultTimeRange string        `json:"defaultTimeRange"`
-	ByReceiptTime    bool          `json:"byReceiptTime"`
-	ViewName         string        `json:"ViewName"`
-	ViewStartTime    string        `json:"ViewStartTime"`
-	QueryParameters  []interface{} `json:"queryParmaeters"`
-	ParsingMode      string        `json:"parsingMode"`
+	QueryText        string        `yaml:"queryText"`
+	DefaultTimeRange string        `yaml:"defaultTimeRange"`
+	ByReceiptTime    bool          `yaml:"byReceiptTime"`
+	ViewName         string        `yaml:"ViewName"`
+	ViewStartTime    string        `yaml:"ViewStartTime"`
+	QueryParameters  []interface{} `yaml:"queryParmaeters"`
+	ParsingMode      string        `yaml:"parsingMode"`
 }
 
 type application struct {
@@ -87,10 +87,10 @@ type folder struct {
 }
 
 type savedSearch struct {
-	Type        string `json:"type"`
-	Name        string `json:"name"`
-	Description string `json:"description"`
-	Search      search `json:"search"`
+	Type        string `yaml:"type"`
+	Name        string `yaml:"name"`
+	Description string `yaml:"description"`
+	Search      search `yaml:"search"`
 	//SearchSchedule searchSchedule `json:"searchSchedule"` TODO: Add this back in. The searchSchedule type needs to be defined first
 }
 
@@ -116,40 +116,40 @@ type dashboard struct {
 }
 
 type layout struct {
-	LayoutType             string            `json:"layoutType"`
-	LayoutStructures       []layoutStructure `json:"layoutStructures"`
-	AppendLayoutStructures []layoutStructure `json:"appendLayoutStructures,omitempty" yaml:"appendLayoutStructures,omitempty"`
+	LayoutType             string            `yaml:"layoutType"`
+	LayoutStructures       []layoutStructure `yaml:"layoutStructures"`
+	AppendLayoutStructures []layoutStructure `yaml:"appendLayoutStructures,omitempty" yaml:"appendLayoutStructures,omitempty"`
 }
 
 type panel struct {
-	Id                                     string     `json:"id,omitempty"`
-	Key                                    string     `json:"key"`
-	Title                                  string     `json:"title"`
-	VisualSettings                         string     `json:"visualSettings"`
-	KeepVisualSettingsConsistentWithParent bool       `json:"keepVisualSettingsConsistentWithParent"`
-	PanelType                              string     `json:"panelType"`
-	Queries                                []query    `json:"queries"`
-	Description                            string     `json:"descriptions"`
-	TimeRange                              *timerange `json:"timeRange"`
-	ColoringRules                          []string   `json:"coloringRules"`
-	LinkedDashboards                       []string   `json:"linkedDashboards"`
-	Text                                   string     `json:"text,omitempty"`
+	Id                                     string     `yaml:"id,omitempty"`
+	Key                                    string     `yaml:"key"`
+	Title                                  string     `yaml:"title"`
+	VisualSettings                         string     `yaml:"visualSettings"`
+	KeepVisualSettingsConsistentWithParent bool       `yaml:"keepVisualSettingsConsistentWithParent"`
+	PanelType                              string     `yaml:"panelType"`
+	Queries                                []query    `yaml:"queries"`
+	Description                            string     `yaml:"descriptions"`
+	TimeRange                              *timerange `yaml:"timeRange"`
+	ColoringRules                          []string   `yaml:"coloringRules"`
+	LinkedDashboards                       []string   `yaml:"linkedDashboards"`
+	Text                                   string     `yaml:"text,omitempty"`
 }
 
 type sourceDefinition struct {
-	VariableSourceType string `json:"variableSourceType"`
-	Query              string `json:"query"`
-	Field              string `json:"field"`
+	VariableSourceType string `yaml:"variableSourceType"`
+	Query              string `yaml:"query"`
+	Field              string `yaml:"field"`
 }
 
 type variable struct {
-	Id               string           `json:"id,omitempty"`
-	Name             string           `json:"name"`
-	DisplayName      string           `json:"displayName"`
-	DefaultValue     string           `json:"defaultValue"`
-	SourceDefinition sourceDefinition `json:"sourceDefinition"`
-	AllowMultiSelect bool             `json:"allowMultiSelect"`
-	IncludeAllOption bool             `json:"includeAllOption"`
-	HideFromUI       bool             `json:"hideFromUI"`
-	ValueType        string           `json:"valueType"`
+	Id               string           `yaml:"id,omitempty"`
+	Name             string           `yaml:"name"`
+	DisplayName      string           `yaml:"displayName"`
+	DefaultValue     string           `yaml:"defaultValue"`
+	SourceDefinition sourceDefinition `yaml:"sourceDefinition"`
+	AllowMultiSelect bool             `yaml:"allowMultiSelect"`
+	IncludeAllOption bool             `yaml:"includeAllOption"`
+	HideFromUI       bool             `yaml:"hideFromUI"`
+	ValueType        string           `yaml:"valueType"`
 }
