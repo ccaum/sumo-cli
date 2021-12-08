@@ -136,10 +136,14 @@ type panel struct {
 	Text                                   string     `json:"text,omitempty"`
 }
 
+// SourceDefinition can take many different forms. So beside VariableSourceType all the fields are omitempty
 type sourceDefinition struct {
 	VariableSourceType string `json:"variableSourceType"`
-	Query              string `json:"query"`
-	Field              string `json:"field"`
+	Query              string `json:"query" yaml:"query,omitempty"`
+	Field              string `json:"field" yaml:"field",omitempty"`
+	Filter             string `json:"filter" yaml:"filter,omitempty"`
+	Key                string `json:"key" yaml:"key,omitempty"`
+	Values             string `json:"values" yaml:"values,omitempty"`
 }
 
 type variable struct {

@@ -36,13 +36,42 @@ func (s *appStream) HasParent() bool {
 }
 
 func (s *appStream) Diff(diffStream *appStream) (diff.Changelog, error) {
-	changelog, err := diff.Diff(s.Dashboards, diffStream.Dashboards)
+	changelogVar, err := diff.Diff(s.Variables, diffStream.Variables)
 	if err != nil {
 		return nil, err
 	}
 
-	fmt.Println("Found", len(changelog), "changes")
-	for _, change := range changelog {
+	changelogPanel, err := diff.Diff(s.Panels, diffStream.Panels)
+	if err != nil {
+		return nil, err
+	}
+
+	changelogSavedSearches, err := diff.Diff(s.SavedSearches, diffStream.SavedSearches)
+	if err != nil {
+		return nil, err
+	}
+
+	changelogDashboard, err := diff.Diff(s.Dashboards, diffStream.Dashboards)
+	if err != nil {
+		return nil, err
+	}
+
+	changelogFolder, err := diff.Diff(s.Folders, diffStream.Folders)
+	if err != nil {
+		return nil, err
+	}
+
+	allChanges := []diff.Changelog{
+		changelogVar, changelogPanel, changelogSavedSearches, changelogDashboard, changelogFolder,
+	}
+
+	var changelogs diff.Changelog
+	for _, c := range allChanges {
+		changelogs = append(changelogs, c...)
+	}
+
+	fmt.Println("Found", len(changelogs), "changes")
+	for _, change := range changelogs {
 		fmt.Println("")
 		fmt.Println("TYPE: ", change.Type)
 		fmt.Println("PATH: ", change.Path)
@@ -50,7 +79,7 @@ func (s *appStream) Diff(diffStream *appStream) (diff.Changelog, error) {
 		fmt.Println("TO: ", change.To)
 	}
 
-	return changelog, nil
+	return changelogs, nil
 }
 
 func (s *appStream) WriteObjects() error {
