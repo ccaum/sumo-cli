@@ -37,9 +37,9 @@ func sanitizeName(name string) string {
 	return sanitizedString
 }
 
-func processChildren(folder *folder, stream *appStream) error {
+func processChildren(folder *folder, overlay *appOverlay) error {
 	for _, childObj := range folder.Children {
-		if err := processChild(childObj, folder, stream); err != nil {
+		if err := processChild(childObj, folder, overlay); err != nil {
 			return err
 		}
 	}
@@ -51,7 +51,7 @@ func processChildren(folder *folder, stream *appStream) error {
 	return nil
 }
 
-func processChild(obj interface{}, parent *folder, stream *appStream) error {
+func processChild(obj interface{}, parent *folder, overlay *appOverlay) error {
 	childType := obj.(map[string]interface{})["type"]
 
 	switch childType {
@@ -63,10 +63,10 @@ func processChild(obj interface{}, parent *folder, stream *appStream) error {
 		}
 
 		safeName := sanitizeName(folderObj.Name)
-		stream.Folders[safeName] = folderObj
+		overlay.Folders[safeName] = folderObj
 
 		parent.Items["folders"] = append(parent.Items["folders"], safeName)
-		processChildren(folderObj, stream)
+		processChildren(folderObj, overlay)
 
 	case DashboardType:
 		var dashboardObj dashboard
@@ -79,12 +79,12 @@ func processChild(obj interface{}, parent *folder, stream *appStream) error {
 
 		//Add each of the panels to the application
 		for _, panelObj := range dashboardObj.Panels {
-			stream.Panels[panelObj.Key] = panelObj
+			overlay.Panels[panelObj.Key] = panelObj
 		}
 
 		//Add each of the variables to the application
 		for _, variableObj := range dashboardObj.Variables {
-			stream.Variables[variableObj.Name] = variableObj
+			overlay.Variables[variableObj.Name] = variableObj
 			dashboardObj.IncludeVariables = append(dashboardObj.IncludeVariables, variableObj.Name)
 		}
 
@@ -93,7 +93,7 @@ func processChild(obj interface{}, parent *folder, stream *appStream) error {
 		dashboardObj.Variables = nil
 		dashboardObj.Type = "" //Making this an empty string will cause the yaml marsheler omit it
 
-		stream.Dashboards[safeName] = &dashboardObj
+		overlay.Dashboards[safeName] = &dashboardObj
 
 		parent.Items["dashboards"] = append(parent.Items["dashboards"], safeName)
 
@@ -106,7 +106,7 @@ func processChild(obj interface{}, parent *folder, stream *appStream) error {
 
 		safeName := sanitizeName(searchObj.Name)
 
-		stream.SavedSearches[safeName] = &searchObj
+		overlay.SavedSearches[safeName] = &searchObj
 
 		parent.Items["savedSearches"] = append(parent.Items["savedSearches"], safeName)
 
@@ -121,20 +121,20 @@ func (a *application) BasePath() string {
 	return a.path
 }
 
-func (a *application) Import(pathToFileToImport string, appstream string) error {
-	return a.ImportWithWriteOption(pathToFileToImport, appstream, true)
+func (a *application) Import(pathToFileToImport string, appoverlay string) error {
+	return a.ImportWithWriteOption(pathToFileToImport, appoverlay, true)
 }
 
-func (a *application) ImportWithWriteOption(pathToFileToImport string, appstream string, writeObjects bool) error {
+func (a *application) ImportWithWriteOption(pathToFileToImport string, appoverlay string, writeObjects bool) error {
 	rootFolder := NewFolder()
 
-	if err := a.LoadAppStreams(); err != nil {
-		return fmt.Errorf("Could not load application app streams: %w", err)
+	if err := a.LoadAppOverlays(); err != nil {
+		return fmt.Errorf("Could not load application app overlays: %w", err)
 	}
 
-	stream, err := a.FindAppStream(appstream)
+	overlay, err := a.FindAppOverlay(appoverlay)
 	if err != nil {
-		return fmt.Errorf("Could not find app stream %s", appstream)
+		return fmt.Errorf("Could not find app overlay %s", appoverlay)
 	}
 
 	//Read the JSON file and load it into objects
@@ -151,13 +151,13 @@ func (a *application) ImportWithWriteOption(pathToFileToImport string, appstream
 		}
 	}
 
-	stream.RootFolder = rootFolder
+	overlay.RootFolder = rootFolder
 
 	//Process the application's child objects (dashboards, folders, saved searches, etc.)
 	//This function operates recursively. For each folder it finds in the children,
 	//it calls itself to process the new folder. That's why the first
 	//argument is a folder
-	if err := processChildren(rootFolder, stream); err != nil {
+	if err := processChildren(rootFolder, overlay); err != nil {
 		return err
 	}
 
@@ -168,50 +168,50 @@ func (a *application) ImportWithWriteOption(pathToFileToImport string, appstream
 	a.Description = rootFolder.Description
 	a.Items = rootFolder.Items
 
-	if err := stream.WriteObjects(); err != nil {
+	if err := overlay.WriteObjects(); err != nil {
 		return err
 	}
 
 	return nil
 }
 
-func (a *application) NewAppStream(name string) *appStream {
-	stream := NewAppStream(name, a)
-	return stream
+func (a *application) NewAppOverlay(name string) *appOverlay {
+	overlay := NewAppOverlay(name, a)
+	return overlay
 }
 
-func (a *application) LoadAppStreams() error {
-	upstream := a.NewAppStream("upstream")
-	midstream := a.NewAppStream("midstream")
-	downstream := a.NewAppStream("downstream")
+func (a *application) LoadAppOverlays() error {
+	baseOverlay := a.NewAppOverlay("base")
+	midOverlay := a.NewAppOverlay("middle")
+	finalOverlay := a.NewAppOverlay("final")
 
-	upstream.Child = midstream
-	midstream.Parent = upstream
-	midstream.Child = downstream
-	downstream.Parent = midstream
+	baseOverlay.Child = midOverlay
+	midOverlay.Parent = baseOverlay
+	midOverlay.Child = finalOverlay
+	finalOverlay.Parent = midOverlay
 
-	streams := []*appStream{upstream, midstream, downstream}
-	for _, stream := range streams {
-		stream.Application = a
+	overlays := []*appOverlay{baseOverlay, midOverlay, finalOverlay}
+	for _, overlay := range overlays {
+		overlay.Application = a
 
-		if err := stream.Load(); err != nil {
+		if err := overlay.Load(); err != nil {
 			return err
 		}
 
-		a.appStreams = append(a.appStreams, stream)
+		a.appOverlays = append(a.appOverlays, overlay)
 	}
 
 	return nil
 }
 
-func (a *application) FindAppStream(name string) (*appStream, error) {
-	for _, stream := range a.appStreams {
-		if stream.Name == name {
-			return stream, nil
+func (a *application) FindAppOverlay(name string) (*appOverlay, error) {
+	for _, overlay := range a.appOverlays {
+		if overlay.Name == name {
+			return overlay, nil
 		}
 	}
 
-	err := fmt.Errorf("Could not find app stream '%s' in %s", name, a.path)
+	err := fmt.Errorf("Could not find app overlay '%s' in %s", name, a.path)
 	return nil, err
 }
 

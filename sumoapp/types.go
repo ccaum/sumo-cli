@@ -55,15 +55,15 @@ type application struct {
 	Type        string        `json:"type" yaml:"type,omitempty"`
 	Items       map[string][]string
 	path        string
-	appStreams  []*appStream
+	appOverlays []*appOverlay
 }
 
-type appStream struct {
+type appOverlay struct {
 	Path          string
 	Name          string
 	Application   *application
-	Parent        *appStream
-	Child         *appStream
+	Parent        *appOverlay
+	Child         *appOverlay
 	Dashboards    map[string]*dashboard
 	Panels        map[string]*panel
 	SavedSearches map[string]*savedSearch

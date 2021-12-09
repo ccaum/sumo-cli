@@ -31,7 +31,7 @@ var (
 var buildCmd = &cobra.Command{
 	Use:   "build",
 	Short: "Compile a single application JSON artifact",
-	Long: `Compiles all the application streams into a single JSON
+	Long: `Compiles all the application overlays into a single JSON
 file that can be imported into Sumo Logic's Continuous Intelligence Platform`,
 	Run: func(cmd *cobra.Command, args []string) {
 		var path string
@@ -47,7 +47,7 @@ file that can be imported into Sumo Logic's Continuous Intelligence Platform`,
 		}
 
 		app := sumoapp.NewApplicationWithPath(path)
-		if err := app.LoadAppStreams(); err != nil {
+		if err := app.LoadAppOverlays(); err != nil {
 			fmt.Fprintf(os.Stderr, "Error: %s", err)
 			os.Exit(1)
 		}
