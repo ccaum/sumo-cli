@@ -62,7 +62,6 @@ including what modifications are made.`,
 		}
 
 		overlay1.Diff(overlay2)
-
 	},
 }
 

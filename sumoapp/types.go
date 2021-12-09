@@ -1,5 +1,7 @@
 package sumoapp
 
+import "github.com/r3labs/diff"
+
 type childType string
 
 const (
@@ -81,9 +83,9 @@ type folder struct {
 	Description   string        `json:"description"`
 	Children      []interface{} `json:"children" yaml:"children,omitempty"`
 	Items         map[string][]string
-	folders       map[string]*folder
-	dashboards    map[string]dashboard
-	savedSearches map[string]savedSearch
+	folders       map[string]*folder     `diff:"-"`
+	dashboards    map[string]dashboard   `diff:"-"`
+	savedSearches map[string]savedSearch `diff:"-"`
 }
 
 type savedSearch struct {
@@ -108,8 +110,8 @@ type dashboard struct {
 	RefreshInterval  int64       `json:"refreshInterval"`
 	TimeRange        *timerange  `json:"timeRange"`
 	Layout           layout      `json:"layout"`
-	Panels           []*panel    `json:"panels" yaml:"panels,omitempty"`
-	Variables        []*variable `json:"variables" yaml:"variables,omitempty"`
+	Panels           []*panel    `json:"panels" yaml:"panels,omitempty" diff:"-"`
+	Variables        []*variable `json:"variables" yaml:"variables,omitempty" diff:"-"`
 	RootPanel        string      `json:"rootPanel,omitempty"`
 	IncludeVariables []string
 	key              string
@@ -145,7 +147,6 @@ type sourceDefinition struct {
 	Key                string `json:"key" yaml:"key,omitempty"`
 	Values             string `json:"values" yaml:"values,omitempty"`
 }
-
 type variable struct {
 	Id               string           `json:"id,omitempty"`
 	Name             string           `json:"name"`
@@ -156,4 +157,12 @@ type variable struct {
 	IncludeAllOption bool             `json:"includeAllOption"`
 	HideFromUI       bool             `json:"hideFromUI"`
 	ValueType        string           `json:"valueType"`
+}
+
+type changeSet struct {
+	ChangelogVar           diff.Changelog
+	ChangelogPanel         diff.Changelog
+	ChangelogSavedSearches diff.Changelog
+	ChangelogDashboard     diff.Changelog
+	ChangelogFolder        diff.Changelog
 }
