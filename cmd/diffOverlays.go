@@ -23,13 +23,13 @@ import (
 	"sumologic.com/sumo-cli/sumoapp"
 )
 
-// diffStreamsCmd represents the diff-streams command
-var diffStreamsCmd = &cobra.Command{
-	Use:   "diff-streams [stream name] [stream name]",
-	Short: "Diff objects between two app streams",
-	Long: `List all differences between two app streams. This command will compare
+// diffOverlaysCmd represents the diff-overlays command
+var diffOverlaysCmd = &cobra.Command{
+	Use:   "diff-overlays [overlay name] [overlay name]",
+	Short: "Diff objects between two app overlays",
+	Long: `List all differences between two app overlays. This command will compare
 all of the folders, dashbaords, panels, saved searches, and variables between two
-app streams and list all of the objects that are created, deleted, and modified,
+app overlays and list all of the objects that are created, deleted, and modified,
 including what modifications are made.`,
 	Run: func(cmd *cobra.Command, args []string) {
 		if len(args) != 2 {
@@ -37,35 +37,35 @@ including what modifications are made.`,
 			os.Exit(1)
 		}
 
-		appStream1 := args[0]
-		appStream2 := args[1]
+		appOverlay1 := args[0]
+		appOverlay2 := args[1]
 
 		app := sumoapp.NewApplicationWithPath(appPath)
-		if err := app.LoadAppStreams(); err != nil {
-			msg := fmt.Errorf("Unable to load app streams: %w", err)
+		if err := app.LoadAppOverlays(); err != nil {
+			msg := fmt.Errorf("Unable to load app overlays: %w", err)
 			fmt.Println(msg)
 			os.Exit(1)
 		}
 
-		stream1, err := app.FindAppStream(appStream1)
+		overlay1, err := app.FindAppOverlay(appOverlay1)
 		if err != nil {
-			msg := fmt.Errorf("Unable to load app stream %s: %w", appStream1, err)
+			msg := fmt.Errorf("Unable to load app overlay %s: %w", appOverlay1, err)
 			fmt.Println(msg)
 			os.Exit(1)
 		}
 
-		stream2, err := app.FindAppStream(appStream2)
+		overlay2, err := app.FindAppOverlay(appOverlay2)
 		if err != nil {
-			msg := fmt.Errorf("Unable to load app stream %s: %w", appStream2, err)
+			msg := fmt.Errorf("Unable to load app overlay %s: %w", appOverlay2, err)
 			fmt.Println(msg)
 			os.Exit(1)
 		}
 
-		stream1.Diff(stream2)
+		overlay1.Diff(overlay2)
 
 	},
 }
 
 func init() {
-	appCmd.AddCommand(diffStreamsCmd)
+	appCmd.AddCommand(diffOverlaysCmd)
 }

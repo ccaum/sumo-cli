@@ -24,7 +24,7 @@ import (
 )
 
 var (
-	appStream string
+	appOverlay string
 )
 
 // importCmd represents the import command
@@ -33,8 +33,8 @@ var importCmd = &cobra.Command{
 	Short: "Import a sumo application",
 	Long: `Import an existing folder or other set of resources. The resources
 will be broken into components (i.e. dashboards, folders, panels, variables).
-By default, the resources will be put into the 'upstream' application stream.
-You can override this behavior using the --app-stream parameter.`,
+By default, the resources will be put into the 'base' application overlay.
+You can override this behavior using the --app-overlay parameter.`,
 
 	Run: func(cmd *cobra.Command, args []string) {
 		var filePath string
@@ -50,7 +50,7 @@ You can override this behavior using the --app-stream parameter.`,
 		}
 
 		app := sumoapp.NewApplicationWithPath(appPath)
-		if err := app.Import(filePath, appStream); err != nil {
+		if err := app.Import(filePath, appOverlay); err != nil {
 			fmt.Fprintf(os.Stderr, "Error: %s", err)
 			os.Exit(1)
 		}
@@ -60,5 +60,5 @@ You can override this behavior using the --app-stream parameter.`,
 func init() {
 	appCmd.AddCommand(importCmd)
 
-	importCmd.PersistentFlags().StringVarP(&appStream, "app-stream", "s", "upstream", "Which app stream to import to")
+	importCmd.PersistentFlags().StringVarP(&appOverlay, "app-overlay", "s", "base", "Which app overlay to import to")
 }

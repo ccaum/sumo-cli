@@ -11,10 +11,10 @@ import (
 	"gopkg.in/yaml.v2"
 )
 
-func NewAppStream(name string, app *application) *appStream {
+func NewAppOverlay(name string, app *application) *appOverlay {
 	path := fmt.Sprintf("%s/%s", app.BasePath(), name)
 
-	return &appStream{
+	return &appOverlay{
 		Name:          name,
 		Application:   app,
 		Path:          path,
@@ -27,7 +27,7 @@ func NewAppStream(name string, app *application) *appStream {
 	}
 }
 
-func (s *appStream) HasParent() bool {
+func (s *appOverlay) HasParent() bool {
 	if s.Parent == nil {
 		return false
 	}
@@ -35,28 +35,28 @@ func (s *appStream) HasParent() bool {
 	return true
 }
 
-func (s *appStream) Diff(diffStream *appStream) (diff.Changelog, error) {
-	changelogVar, err := diff.Diff(s.Variables, diffStream.Variables)
+func (s *appOverlay) Diff(diffOverlay *appOverlay) (diff.Changelog, error) {
+	changelogVar, err := diff.Diff(s.Variables, diffOverlay.Variables)
 	if err != nil {
 		return nil, err
 	}
 
-	changelogPanel, err := diff.Diff(s.Panels, diffStream.Panels)
+	changelogPanel, err := diff.Diff(s.Panels, diffOverlay.Panels)
 	if err != nil {
 		return nil, err
 	}
 
-	changelogSavedSearches, err := diff.Diff(s.SavedSearches, diffStream.SavedSearches)
+	changelogSavedSearches, err := diff.Diff(s.SavedSearches, diffOverlay.SavedSearches)
 	if err != nil {
 		return nil, err
 	}
 
-	changelogDashboard, err := diff.Diff(s.Dashboards, diffStream.Dashboards)
+	changelogDashboard, err := diff.Diff(s.Dashboards, diffOverlay.Dashboards)
 	if err != nil {
 		return nil, err
 	}
 
-	changelogFolder, err := diff.Diff(s.Folders, diffStream.Folders)
+	changelogFolder, err := diff.Diff(s.Folders, diffOverlay.Folders)
 	if err != nil {
 		return nil, err
 	}
@@ -82,8 +82,8 @@ func (s *appStream) Diff(diffStream *appStream) (diff.Changelog, error) {
 	return changelogs, nil
 }
 
-func (s *appStream) WriteObjects() error {
-	//Write the folder objects to the app stream
+func (s *appOverlay) WriteObjects() error {
+	//Write the folder objects to the app overlay
 	for fName, folderObj := range s.Folders {
 		folderMap := make(map[string]*folder)
 		folderMap[fName] = folderObj
@@ -99,7 +99,7 @@ func (s *appStream) WriteObjects() error {
 		}
 	}
 
-	//Write the dashboard objects to the app stream
+	//Write the dashboard objects to the app overlay
 	for dName, dashboardObj := range s.Dashboards {
 		dashMap := make(map[string]*dashboard)
 		dashMap[dName] = dashboardObj
@@ -115,7 +115,7 @@ func (s *appStream) WriteObjects() error {
 		}
 	}
 
-	//Write the panel objects to the app stream
+	//Write the panel objects to the app overlay
 	for pName, panelObj := range s.Panels {
 		panelMap := make(map[string]*panel)
 		panelMap[pName] = panelObj
@@ -131,7 +131,7 @@ func (s *appStream) WriteObjects() error {
 		}
 	}
 
-	//Write the variable objects to the app stream
+	//Write the variable objects to the app overlay
 	for vName, variableObj := range s.Variables {
 		variableMap := make(map[string]*variable)
 		variableMap[vName] = variableObj
@@ -147,7 +147,7 @@ func (s *appStream) WriteObjects() error {
 		}
 	}
 
-	//Write the saved search objects to the app stream
+	//Write the saved search objects to the app overlay
 	for sName, searchObj := range s.SavedSearches {
 		searchMap := make(map[string]*savedSearch)
 		searchMap[sName] = searchObj
@@ -163,7 +163,7 @@ func (s *appStream) WriteObjects() error {
 		}
 	}
 
-	//Write the application's definition to the init file in the stream
+	//Write the application's definition to the init file in the overlay
 	a, err := yaml.Marshal(s.Application)
 	if err != nil {
 		return err
@@ -177,8 +177,8 @@ func (s *appStream) WriteObjects() error {
 	return nil
 }
 
-func (s *appStream) populateFolder(f *folder) error {
-	//Children was inherited from the parent stream. It needs to be cleared
+func (s *appOverlay) populateFolder(f *folder) error {
+	//Children was inherited from the parent overlay. It needs to be cleared
 	//or objects will be appear in the list multiple times.
 	//TODO: this shouldn't be necessary. Can we avoid this in the
 	//Merge() function?
@@ -212,7 +212,7 @@ func (s *appStream) populateFolder(f *folder) error {
 	return nil
 }
 
-func (s *appStream) loadDashboards(basePath string) error {
+func (s *appOverlay) loadDashboards(basePath string) error {
 	dashboards := make(map[string]*dashboard)
 
 	dfiles, err := ioutil.ReadDir(basePath)
@@ -246,13 +246,13 @@ func (s *appStream) loadDashboards(basePath string) error {
 
 	s.Dashboards = dashboards
 
-	//Append the dashboards defined in the parent stream that are NOT
-	//overwritten in this stream. Dashboards that have overwrites in this
-	//stream will be merged with their parent dashboard and the new
-	//object will be added to this stream's list of dashboards
+	//Append the dashboards defined in the parent overlay that are NOT
+	//overwritten in this overlay. Dashboards that have overwrites in this
+	//overlay will be merged with their parent dashboard and the new
+	//object will be added to this overlay's list of dashboards
 	if s.HasParent() {
 		for name, pd := range s.Parent.Dashboards {
-			//If the parent stream has a dashboard by the same name
+			//If the parent overlay has a dashboard by the same name
 			//merge the current dashboard with its parent
 			d, ok := s.Dashboards[name]
 			if !ok {
@@ -275,7 +275,7 @@ func (s *appStream) loadDashboards(basePath string) error {
 		dash.Type = DashboardType
 
 		//Ensure we have clean lists in case the object was inherited
-		//from the parent stream. The Populate() function will repopulate
+		//from the parent overlay. The Populate() function will repopulate
 		//the panels and variables
 		dash.Panels = make([]*panel, 0)
 		dash.Variables = make([]*variable, 0)
@@ -288,7 +288,7 @@ func (s *appStream) loadDashboards(basePath string) error {
 	return nil
 }
 
-func (s *appStream) loadVariables(basePath string) error {
+func (s *appOverlay) loadVariables(basePath string) error {
 	variables := make(map[string]*variable)
 
 	files, err := ioutil.ReadDir(basePath)
@@ -322,13 +322,13 @@ func (s *appStream) loadVariables(basePath string) error {
 
 	s.Variables = variables
 
-	//Append the variables defined in the parent stream that are NOT
-	//overwritten in this stream. Variables that have overwrites in this
-	//stream will be merged with their parent variable and the new
-	//object will be added to this stream's list of variables
+	//Append the variables defined in the parent overlay that are NOT
+	//overwritten in this overlay. Variables that have overwrites in this
+	//overlay will be merged with their parent variable and the new
+	//object will be added to this overlay's list of variables
 	if s.HasParent() {
 		for name, pv := range s.Parent.Variables {
-			//If the parent stream has a variable by the same name
+			//If the parent overlay has a variable by the same name
 			//merge the current variable with its parent
 			v, ok := s.Variables[name]
 			if !ok {
@@ -350,10 +350,10 @@ func (s *appStream) loadVariables(basePath string) error {
 	return nil
 }
 
-func (s *appStream) loadPanels(basePath string) error {
+func (s *appOverlay) loadPanels(basePath string) error {
 	panels := make(map[string]*panel)
 
-	//Load the panel files from this stream's file system
+	//Load the panel files from this overlay's file system
 	files, err := ioutil.ReadDir(basePath)
 	if err != nil {
 		return err
@@ -385,13 +385,13 @@ func (s *appStream) loadPanels(basePath string) error {
 
 	s.Panels = panels
 
-	//Append the panels defined in the parent stream that are NOT
-	//overwritten in this stream. Panels that have overwrites in this
-	//stream will be merged with their parent panel and the new
-	//object will be added to this stream's list of dashboards
+	//Append the panels defined in the parent overlay that are NOT
+	//overwritten in this overlay. Panels that have overwrites in this
+	//overlay will be merged with their parent panel and the new
+	//object will be added to this overlay's list of dashboards
 	if s.HasParent() {
 		for name, pp := range s.Parent.Panels {
-			//If the parent stream has a panel by the same name
+			//If the parent overlay has a panel by the same name
 			//merge the current dashboard with its parent
 			p, ok := s.Panels[name]
 			if !ok {
@@ -413,7 +413,7 @@ func (s *appStream) loadPanels(basePath string) error {
 	return nil
 }
 
-func (s *appStream) FindDashboard(name string) (*dashboard, error) {
+func (s *appOverlay) FindDashboard(name string) (*dashboard, error) {
 	dash, ok := s.Dashboards[name]
 	if !ok {
 		err := fmt.Errorf("Could not find dashboard '%s'", name)
@@ -423,7 +423,7 @@ func (s *appStream) FindDashboard(name string) (*dashboard, error) {
 	return dash, nil
 }
 
-func (s *appStream) FindVariable(name string) (*variable, error) {
+func (s *appOverlay) FindVariable(name string) (*variable, error) {
 	varObj, ok := s.Variables[name]
 	if !ok {
 		err := fmt.Errorf("Could not find variable '%s'", name)
@@ -433,7 +433,7 @@ func (s *appStream) FindVariable(name string) (*variable, error) {
 	return varObj, nil
 }
 
-func (s *appStream) FindSavedSearch(name string) (*savedSearch, error) {
+func (s *appOverlay) FindSavedSearch(name string) (*savedSearch, error) {
 	search, ok := s.SavedSearches[name]
 	if !ok {
 		err := fmt.Errorf("Could not find saved search '%s'", name)
@@ -443,7 +443,7 @@ func (s *appStream) FindSavedSearch(name string) (*savedSearch, error) {
 	return search, nil
 }
 
-func (s *appStream) FindFolder(name string) (*folder, error) {
+func (s *appOverlay) FindFolder(name string) (*folder, error) {
 	folderObj, ok := s.Folders[name]
 	if !ok {
 		err := fmt.Errorf("Could not find folder '%s'", name)
@@ -453,7 +453,7 @@ func (s *appStream) FindFolder(name string) (*folder, error) {
 	return folderObj, nil
 }
 
-func (s *appStream) FindPanel(name string) (*panel, error) {
+func (s *appOverlay) FindPanel(name string) (*panel, error) {
 	pan, ok := s.Panels[name]
 	if !ok {
 		err := fmt.Errorf("Could not find panel '%s'", name)
@@ -463,7 +463,7 @@ func (s *appStream) FindPanel(name string) (*panel, error) {
 	return pan, nil
 }
 
-func (s *appStream) loadRootFolder(appFilePath string) error {
+func (s *appOverlay) loadRootFolder(appFilePath string) error {
 	var root folder
 
 	data, err := os.ReadFile(appFilePath)
@@ -496,13 +496,13 @@ func (s *appStream) loadRootFolder(appFilePath string) error {
 		s.Application.Name = root.Name
 	}
 
-	//Update the application's children to be this stream's children
+	//Update the application's children to be this overlay's children
 	s.Application.Children = root.Children
 
 	return nil
 }
 
-func (s *appStream) loadFolders(basePath string) error {
+func (s *appOverlay) loadFolders(basePath string) error {
 	folders := make(map[string]*folder)
 
 	ffiles, err := ioutil.ReadDir(basePath)
@@ -536,13 +536,13 @@ func (s *appStream) loadFolders(basePath string) error {
 
 	s.Folders = folders
 
-	//Append the folders defined in the parent stream that are NOT
-	//overwritten in this stream. Folders that have overwrites in this
-	//stream will be merged with their parent folder and the new
-	//object will be added to this stream's list of folders
+	//Append the folders defined in the parent overlay that are NOT
+	//overwritten in this overlay. Folders that have overwrites in this
+	//overlay will be merged with their parent folder and the new
+	//object will be added to this overlay's list of folders
 	if s.HasParent() {
 		for name, pf := range s.Parent.Folders {
-			//If the parent stream has a folder by the same name
+			//If the parent overlay has a folder by the same name
 			//merge the current folder with its parent
 			f, ok := s.Folders[name]
 			if !ok {
@@ -566,7 +566,7 @@ func (s *appStream) loadFolders(basePath string) error {
 	return nil
 }
 
-func (s *appStream) loadSavedSearches(basePath string) error {
+func (s *appOverlay) loadSavedSearches(basePath string) error {
 	searches := make(map[string]*savedSearch)
 
 	sfiles, err := ioutil.ReadDir(basePath)
@@ -600,13 +600,13 @@ func (s *appStream) loadSavedSearches(basePath string) error {
 
 	s.SavedSearches = searches
 
-	//Append the searches defined in the parent stream that are NOT
-	//overwritten in this stream. Searches that have overwrites in this
-	//stream will be merged with their parent search and the new
-	//object will be added to this stream's list of searches
+	//Append the searches defined in the parent overlay that are NOT
+	//overwritten in this overlay. Searches that have overwrites in this
+	//overlay will be merged with their parent search and the new
+	//object will be added to this overlay's list of searches
 	if s.HasParent() {
 		for name, ps := range s.Parent.SavedSearches {
-			//If the parent stream has a search by the same name
+			//If the parent overlay has a search by the same name
 			//merge the current search with its parent
 			ss, ok := s.SavedSearches[name]
 			if !ok {
@@ -630,7 +630,7 @@ func (s *appStream) loadSavedSearches(basePath string) error {
 	return nil
 }
 
-func (s *appStream) Load() error {
+func (s *appOverlay) Load() error {
 	var err error
 
 	panelBasePath := fmt.Sprintf("%s/panels", s.Path)

@@ -21,43 +21,43 @@ var debugCmd = &cobra.Command{
 
 var debugLoadCmd = &cobra.Command{
 	Use:   "load",
-	Short: "Test loading an appstream",
-	Long:  `Test loading an appstream`,
+	Short: "Test loading an appoverlay",
+	Long:  `Test loading an appoverlay`,
 	Run: func(cmd *cobra.Command, args []string) {
 		if len(args) != 3 {
-			fmt.Print("Usage: debug load app-stream type key")
+			fmt.Print("Usage: debug load app-overlay type key")
 			os.Exit(1)
 		}
 
-		appStream := args[0]
+		appOverlay := args[0]
 		thetype := args[1]
 		key := args[2]
 
 		app := sumoapp.NewApplicationWithPath(appPath)
-		if err := app.LoadAppStreams(); err != nil {
-			msg := fmt.Errorf("Unable to load app streams: %w", err)
+		if err := app.LoadAppOverlays(); err != nil {
+			msg := fmt.Errorf("Unable to load app overlays: %w", err)
 			fmt.Println(msg)
 			os.Exit(1)
 		}
 
-		stream, err := app.FindAppStream(appStream)
+		overlay, err := app.FindAppOverlay(appOverlay)
 		if err != nil {
-			msg := fmt.Errorf("Unable to load app stream %s: %w", appStream, err)
+			msg := fmt.Errorf("Unable to load app overlay %s: %w", appOverlay, err)
 			fmt.Println(msg)
 			os.Exit(1)
 		}
 
 		switch thetype {
 		case "variable":
-			WriteYamlObject(stream.Variables[key])
+			WriteYamlObject(overlay.Variables[key])
 		case "panel":
-			WriteYamlObject(stream.Panels[key])
+			WriteYamlObject(overlay.Panels[key])
 		case "saved-search":
-			WriteYamlObject(stream.SavedSearches[key])
+			WriteYamlObject(overlay.SavedSearches[key])
 		case "dashboards":
-			WriteYamlObject(stream.Dashboards[key])
+			WriteYamlObject(overlay.Dashboards[key])
 		case "folder":
-			WriteYamlObject(stream.Folders[key])
+			WriteYamlObject(overlay.Folders[key])
 		}
 	},
 }

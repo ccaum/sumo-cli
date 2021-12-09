@@ -48,18 +48,18 @@ func (d *dashboard) Copy() *dashboard {
 	}
 }
 
-func (d *dashboard) Populate(stream *appStream) error {
+func (d *dashboard) Populate(overlay *appOverlay) error {
 	//Populate the dashboard with the panels and variables
 	//It is very important the the panels and variables have been
 	//loaded before calling this function
 
 	for _, layoutPanel := range d.Layout.LayoutStructures {
-		if _, ok := stream.Panels[layoutPanel.Key]; !ok {
+		if _, ok := overlay.Panels[layoutPanel.Key]; !ok {
 			err := fmt.Errorf("Could not find panel '%s'. Referenced in dashboard '%s' layout", layoutPanel.Key, d.Name)
 			return err
 		}
 
-		p := stream.Panels[layoutPanel.Key]
+		p := overlay.Panels[layoutPanel.Key]
 
 		d.Panels = append(d.Panels, p)
 	}
@@ -69,17 +69,17 @@ func (d *dashboard) Populate(stream *appStream) error {
 		//Add the layout structure the panels layout
 		d.Layout.LayoutStructures = append(d.Layout.LayoutStructures, layoutPanel)
 
-		if _, ok := stream.Panels[layoutPanel.Key]; !ok {
+		if _, ok := overlay.Panels[layoutPanel.Key]; !ok {
 			err := fmt.Errorf("Could not find panel '%s'. Referenced in dashboard '%s' layout", layoutPanel.Key, d.Name)
 			return err
 		}
 
-		p := stream.Panels[layoutPanel.Key]
+		p := overlay.Panels[layoutPanel.Key]
 		d.Panels = append(d.Panels, p)
 	}
 
 	for _, variableName := range d.IncludeVariables {
-		v, ok := stream.Variables[variableName]
+		v, ok := overlay.Variables[variableName]
 		if !ok {
 			err := fmt.Errorf("Could not find variable '%s'. Referenced in dashboard '%s'", variableName, d.Name)
 			return err
