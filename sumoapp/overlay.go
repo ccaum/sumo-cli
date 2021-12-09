@@ -7,7 +7,6 @@ import (
 	"path/filepath"
 
 	"github.com/imdario/mergo"
-	"github.com/r3labs/diff"
 	"gopkg.in/yaml.v2"
 )
 
@@ -35,51 +34,21 @@ func (s *appOverlay) HasParent() bool {
 	return true
 }
 
-func (s *appOverlay) Diff(diffOverlay *appOverlay) (diff.Changelog, error) {
-	changelogVar, err := diff.Diff(s.Variables, diffOverlay.Variables)
+func (s *appOverlay) Diff(diffOverlay *appOverlay) (changeSet, error) {
+	changelogVar, err := taggedDiff("variable", s.Variables, diffOverlay.Variables)
+	changelogPanel, err := taggedDiff("panel", s.Panels, diffOverlay.Panels)
+	changelogSavedSearches, err := taggedDiff("saved-search", s.SavedSearches, diffOverlay.SavedSearches)
+	changelogDashboard, err := taggedDiff("dashboard", s.Dashboards, diffOverlay.Dashboards)
+	changelogFolder, err := taggedDiff("folder", s.Folders, diffOverlay.Folders)
 	if err != nil {
-		return nil, err
+		return changeSet{}, err
 	}
 
-	changelogPanel, err := diff.Diff(s.Panels, diffOverlay.Panels)
-	if err != nil {
-		return nil, err
-	}
+	cs := changeSet{changelogVar, changelogPanel, changelogSavedSearches, changelogDashboard, changelogFolder}
 
-	changelogSavedSearches, err := diff.Diff(s.SavedSearches, diffOverlay.SavedSearches)
-	if err != nil {
-		return nil, err
-	}
+	displayDiff(&cs)
 
-	changelogDashboard, err := diff.Diff(s.Dashboards, diffOverlay.Dashboards)
-	if err != nil {
-		return nil, err
-	}
-
-	changelogFolder, err := diff.Diff(s.Folders, diffOverlay.Folders)
-	if err != nil {
-		return nil, err
-	}
-
-	allChanges := []diff.Changelog{
-		changelogVar, changelogPanel, changelogSavedSearches, changelogDashboard, changelogFolder,
-	}
-
-	var changelogs diff.Changelog
-	for _, c := range allChanges {
-		changelogs = append(changelogs, c...)
-	}
-
-	fmt.Println("Found", len(changelogs), "changes")
-	for _, change := range changelogs {
-		fmt.Println("")
-		fmt.Println("TYPE: ", change.Type)
-		fmt.Println("PATH: ", change.Path)
-		fmt.Println("FROM: ", change.From)
-		fmt.Println("TO: ", change.To)
-	}
-
-	return changelogs, nil
+	return cs, nil
 }
 
 func (s *appOverlay) WriteObjects() error {
