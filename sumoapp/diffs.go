@@ -50,19 +50,54 @@ func displayDiff(cs *changeSet) {
 	}
 
 	fmt.Println("Found", len(changelogs), "changes")
-	for _, change := range changelogs {
-		fmt.Println("")
-		fmt.Println("TYPE: ", change.Type)
-		fmt.Println("PATH: ", change.Path)
-		if change.Type == "update" {
-			fmt.Println(writeDeleted(change.From))
-			fmt.Println(writeCreated(change.To), ColorReset)
-		} else if change.Type == "create" {
-			fmt.Println(writeCreated(change.To), ColorReset)
-		} else if change.Type == "delete" {
-			fmt.Println(writeDeleted(change.From), ColorReset)
+	fmt.Println()
+	displayDiffSection(cs.ChangelogVar)
+	displayDiffSection(cs.ChangelogPanel)
+	displayDiffSection(cs.ChangelogSavedSearches)
+	displayDiffSection(cs.ChangelogDashboard)
+	displayDiffSection(cs.ChangelogFolder)
+}
+
+func displayDiffSection(changes diff.Changelog) {
+	if len(changes) == 0 {
+		return
+	}
+	category := changes[0].Path[0]
+
+	groupedByFilename := groupChangesByFilename(changes)
+
+	fmt.Println("=========== ", category, " ============")
+	for fn, cs := range groupedByFilename {
+		fmt.Println("In", category, fn, ":", len(cs), "change(s)")
+		for _, c := range cs {
+			if len(c.Path) > 2 {
+				fmt.Println("At", strings.Join(c.Path[2:], "."))
+			}
+			if c.Type == "update" {
+				fmt.Println(writeDeleted(c.From))
+				fmt.Println(writeCreated(c.To), ColorReset)
+			} else if c.Type == "create" {
+				fmt.Println(writeCreated(c.To), ColorReset)
+			} else if c.Type == "delete" {
+				fmt.Println(writeDeleted(c.From), ColorReset)
+			}
+			fmt.Println()
 		}
 	}
+}
+
+func groupChangesByFilename(changes diff.Changelog) map[string][]diff.Change {
+	results := make(map[string][]diff.Change)
+	for _, c := range changes {
+		filename := c.Path[1]
+		_, exists := results[filename]
+		if exists {
+			results[filename] = append(results[filename], c)
+		} else {
+			results[filename] = []diff.Change{c}
+		}
+	}
+	return results
 }
 
 func writeDeleted(object interface{}) string {
