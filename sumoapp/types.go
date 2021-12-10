@@ -10,6 +10,13 @@ const (
 	SavedSearchType        = "SavedSearchWithScheduleSyncDefinition"
 )
 
+type asyncAPIContent struct {
+	Id            string
+	Status        string
+	StatusMessage string
+	Error         string
+}
+
 type timeBoundary struct {
 	Type         string `json:"type,omitempty"`
 	RelativeTime string `json:"relativeTime,omitempty"`
@@ -78,6 +85,7 @@ type appOverlay struct {
 type searchSchedule struct{}
 
 type folder struct {
+	Id            string        `json:"id,omitempty"`
 	Type          string        `json:"type" yaml:"type,omitempty"`
 	Name          string        `json:"name"`
 	Description   string        `json:"description"`

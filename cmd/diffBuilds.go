@@ -26,7 +26,7 @@ import (
 // diffOverlaysCmd represents the diff-overlays command
 var diffBuildsCmd = &cobra.Command{
 	Use:   "diff-builds [build A] [build B]",
-	Short: "Diff objects between two app builds",
+	Short: "Diff objects between two app builds (json files)",
 	Long: `List all differences between two app builds. This command will compare
 all of the folders, dashbaords, panels, saved searches, and variables between two
 app builds JSON files and list all of the objects that are created, deleted, and modified,
