@@ -54,7 +54,7 @@ including what modifications are made.`,
 		}
 
 		if err := app.ImportToOverlay(appBuild2, build2DiffOverlay); err != nil {
-			msg := fmt.Sprintf("Error: could not load %s - %w", appBuild1, err.Error())
+			msg := fmt.Sprintf("Error: could not load %s - %w", appBuild2, err.Error())
 			fmt.Fprintf(os.Stderr, msg)
 			os.Exit(1)
 		}
