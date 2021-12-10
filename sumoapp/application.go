@@ -125,17 +125,8 @@ func (a *application) Import(pathToFileToImport string, appoverlay string) error
 	return a.ImportWithWriteOption(pathToFileToImport, appoverlay, true)
 }
 
-func (a *application) ImportWithWriteOption(pathToFileToImport string, appoverlay string, writeObjects bool) error {
+func (a *application) ImportToOverlay(pathToFileToImport string, overlay *appOverlay) error {
 	rootFolder := NewFolder()
-
-	if err := a.LoadAppOverlays(); err != nil {
-		return fmt.Errorf("Could not load application app overlays: %w", err)
-	}
-
-	overlay, err := a.FindAppOverlay(appoverlay)
-	if err != nil {
-		return fmt.Errorf("Could not find app overlay %s", appoverlay)
-	}
 
 	//Read the JSON file and load it into objects
 	data, err := os.ReadFile(pathToFileToImport)
@@ -168,8 +159,25 @@ func (a *application) ImportWithWriteOption(pathToFileToImport string, appoverla
 	a.Description = rootFolder.Description
 	a.Items = rootFolder.Items
 
-	if err := overlay.WriteObjects(); err != nil {
-		return err
+	return nil
+}
+
+func (a *application) ImportWithWriteOption(pathToFileToImport string, appoverlay string, writeObjects bool) error {
+	if err := a.LoadAppOverlays(); err != nil {
+		return fmt.Errorf("Could not load application app overlays: %w", err)
+	}
+
+	overlay, err := a.FindAppOverlay(appoverlay)
+	if err != nil {
+		return fmt.Errorf("Could not find app overlay %s", appoverlay)
+	}
+
+	a.ImportToOverlay(pathToFileToImport, overlay)
+
+	if writeObjects {
+		if err := overlay.WriteObjects(); err != nil {
+			return err
+		}
 	}
 
 	return nil
