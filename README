@@ -37,8 +37,19 @@ such as dashboards, folders, and saved searches, are composed of reusable compon
 such as panels and filter variables. Each component can be defined once and referenced
 in multiple places.
 
-The resulting code is fully idempotent and be applied multiple times to your Sumo Logic
-account, always ensuring the end desired state.
+**Composability**
+
+Applications managed as code with this tool are fully composable. A dashboard panel
+can be defined once and reused in multiple dashboards. A single dashboard can be referenced
+in multiple folders. If any component is updated, every other component that references
+the updated component will get the update.
+
+**Idempotency**
+
+The application code is fully idempotent and be applied multiple times to your Sumo Logic
+account, always ensuring what's in your Sumo Logic account is always the desired state.
+This allows you to apply your application code on a schedule. If the application is found
+to be out of the desired state, this tool will bring it back into its correct configuration.
 
 ## How it works
 
