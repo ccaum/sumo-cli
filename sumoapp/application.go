@@ -1,9 +1,11 @@
 package sumoapp
 
 import (
+	"bufio"
 	"encoding/json"
 	"errors"
 	"fmt"
+	"io"
 	"os"
 	"strings"
 
@@ -126,14 +128,37 @@ func (a *application) Import(pathToFileToImport string, appoverlay string) error
 }
 
 func (a *application) ImportToOverlay(pathToFileToImport string, overlay *appOverlay) error {
+	var ioReader io.Reader
+	var data []byte
+	const maxCapacity = 512 * 1024
+
 	rootFolder := NewFolder()
 
-	//Read the JSON file and load it into objects
-	data, err := os.ReadFile(pathToFileToImport)
-	if err != nil {
+	//Read the JSON file or stdnin and load it into objects
+	if pathToFileToImport == "-" {
+		ioReader = os.Stdin
+	} else {
+		var err error
+		ioReader, err = os.Open(pathToFileToImport)
+		if err != nil {
+			return err
+		}
+	}
+
+	scanner := bufio.NewScanner(ioReader)
+	scanBuf := make([]byte, maxCapacity)
+	scanner.Buffer(scanBuf, maxCapacity)
+	for scanner.Scan() {
+		for _, b := range scanner.Bytes() {
+			data = append(data, b)
+		}
+	}
+
+	if err := scanner.Err(); err != nil {
 		return err
 	}
 
+	fmt.Println(string(data))
 	if err := json.Unmarshal(data, rootFolder); err != nil {
 		if jsonErr, ok := err.(*json.SyntaxError); ok {
 			problemPart := data[jsonErr.Offset-10 : jsonErr.Offset+10]

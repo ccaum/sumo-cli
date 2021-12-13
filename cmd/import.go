@@ -41,7 +41,7 @@ You can override this behavior using the --app-overlay parameter.`,
 
 		switch len(args) {
 		case 0:
-			fmt.Fprintf(os.Stderr, "Error: not enough arguments. Provide the json file to import. See https://help.sumologic.com/01Start-Here/Library/Export-and-Import-Content-in-the-Library#export-content-in-the-library for more information")
+			fmt.Fprintf(os.Stderr, "Error: not enough arguments. Provide the json file (or stdin) to import. See https://help.sumologic.com/01Start-Here/Library/Export-and-Import-Content-in-the-Library#export-content-in-the-library for more information")
 			os.Exit(1)
 		case 1:
 			filePath = args[0]

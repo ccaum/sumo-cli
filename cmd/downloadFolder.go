@@ -74,7 +74,6 @@ var downloadFoldersCmd = &cobra.Command{
 			os.Exit(1)
 		}
 
-		fmt.Println("D: ", downloadDestination)
 		if downloadDestination == "-" {
 			fmt.Println(string(fileBytes))
 		} else {
