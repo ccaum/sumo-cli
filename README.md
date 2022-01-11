@@ -10,7 +10,7 @@
 
 2. Rename the file and make executable with `mv sumo-<platform> sumo && chmod +x sumo`
 
-3. Configure your access credentials in `$HOME/.sumo-cli` (See Getting Access Credentials below)
+3. Configure your access credentials in `$HOME/.sumo-cli` (See [Getting Access Credentials below](#getting-access-credentials))
 
 4. Run `./sumo --help` to learn about what the command can do
 
@@ -53,11 +53,50 @@ to be out of the desired state, this tool will bring it back into its correct co
 
 ## How it works
 
+### Getting Access Credentials
+1) Create an access ID/key pair by following [the documentation](https://help.sumologic.com/Manage/Security/Access-Keys#manage-your-access-keys-on-preferences-page)
+2) Get your account's deployment region code by following [these instructions](https://help.sumologic.com/APIs/General-API-Information/Sumo-Logic-Endpoints-and-Firewall-Security#how-can-i-determine-which-endpoint-i-should-use)
+3) Save your credentials in `$HOME/.sumo-cli` with the following format:
+
+```
+access-id: <your access ID>
+access-key: <your access key>
+deployment: <your deployment region>
+```
+
 ### How to manage application content
 
 #### Importing content from Sumo Logic
+Import a content folder from your Sumo Logic account with the following:
+`sumo app download-folder <folder ID> | sumo app import`
+
+This will import your content to a `base` directory.
+
+#### Overwriting base content
+Individual component resources such as folders, dashboards, panels, saved-searches, and variables can be modified through overlays. An overlay is a place to put content modifications that will be merged with the parent overlay. 
+
+There are three layers, a base layer and two overlay layers
+- base
+- middle
+- final
+
+Upstream content, such an app catalog release or content from another git repository, goes in `base`. Any components that have modification data in the `middle` overlay will overwrite the same component in the `base` layer. Likewise, component modifications in the `final` layer will overwrite anything in the `middle` layer. Note that if you modify a component in the `final` layer and that component is not defined at all in the `middle` layer, the modification effectively applies to the component in the `base` layer.
+
 
 #### Applying app modifications in overlays
+
+[TBD]
+
+#### Performing and deploying a build
+When it's time to push content to Sumo Logic, you can create a build with the following command:
+`sumo app build`
+
+This will create a file called `build.json` that contains all of the folders, dashboards, and saved searches defined in your application, including modifications defined in overlays.
+
+Deploy the build to Sumo Logic with:
+`sumo app push -d <parent folder ID> --overwrite`
+
+The `--overwrite` flag will force any existing content in the parent folder to be replaced with the content defined in the `build.json` file. This can be run on a schedule to perform desired state reconsiliation in order to ensure our production content always matches the source of truth: the code.
 
 #### GitOps - Automating development workflows in GitHub
 
